@@ -1,2 +1,2 @@
-# Amity_Papers_Portal_Project
+# Amity-Papers-Portal-Project
 We are designing the Previous Years Papers Portal for Amity University Madhya Pradesh Students.
