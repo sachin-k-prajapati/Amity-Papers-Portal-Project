@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .hero-gradient {
+    background: linear-gradient(135deg, rgba(8,47,73,0.9) 0%, rgba(4,47,46,0.9) 100%);
+  }
+  
+  .quick-access-btn {
+    @apply flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all;
+    @apply bg-white text-gray-800 shadow-sm hover:shadow-md hover:-translate-y-0.5;
+  }
+  
+  .institute-card {
+    @apply bg-white rounded-xl shadow-md overflow-hidden transition-all;
+    @apply hover:shadow-lg hover:-translate-y-1 border border-gray-200;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Gradient -->
+<section class="hero-section hero-gradient text-white py-20 md:py-32 relative">
+  <div class="absolute inset-0 opacity-10 bg-cover bg-center" 
+       style="background-image: url('{% static 'images/amity_bg.png' %}')"></div>
+  
+  <div class="container mx-auto px-4 text-center relative z-10">
+    <h1 class="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">
+      Amity University Exam Repository
+    </h1>
+    <p class="text-xl mb-8 max-w-2xl mx-auto">
+      Access 10,000+ previous year papers with intelligent search
+    </p>
+    
+    <!-- Smart Search with Typeahead -->
+    <div class="max-w-2xl mx-auto relative">
+      <div class="relative">
+        <input type="text" id="smart-search" 
+               class="w-full py-4 px-6 rounded-full shadow-lg focus:outline-none text-gray-800 pr-12"
+               placeholder="Try 'CS301 mid sem 2023' or 'MBA finance papers'">
+        <button class="absolute right-3 top-3 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div id="search-suggestions" class="hidden absolute z-10 w-full mt-2 bg-white rounded-lg shadow-xl overflow-hidden"></div>
+    </div>
+    
+    <!-- Stats Bar -->
+    <div class="mt-12 flex flex-wrap justify-center gap-4">
+      <div class="stat-box">
+        <div class="text-3xl font-bold">{{ total_papers|default:"10,000+" }}</div>
+        <div class="text-sm opacity-80">Exam Papers</div>
+      </div>
+      <div class="stat-box">
+        <div class="text-3xl font-bold">{{ total_subjects|default:"500+" }}</div>
+        <div class="text-sm opacity-80">Subjects</div>
+      </div>
+      <div class="stat-box">
+        <div class="text-3xl font-bold">{{ total_institutes|default:"20+" }}</div>
+        <div class="text-sm opacity-80">Institutes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Access -->
+<div class="quick-access bg-white py-4 shadow-sm sticky top-0 z-10 border-b">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-wrap justify-center gap-2 md:gap-4">
+      <a href="#engineering" class="quick-access-btn">
+        <i class="fas fa-microchip mr-2"></i> Engineering
+      </a>
+      <a href="#" class="quick-access-btn">
+        <i class="fas fa-flask mr-2"></i> Science
+      </a>
+      <a href="#" class="quick-access-btn">
+        <i class="fas fa-briefcase mr-2"></i> Management
+      </a>
+      <a href="#" class="quick-access-btn">
+        <i class="fas fa-gavel mr-2"></i> Law
+      </a>
+      <a href="#" class="quick-access-btn bg-red-100 text-red-800 hover:bg-red-200">
+        <i class="fas fa-star mr-2"></i> Top Downloads
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ASET Section -->
+<section class="py-16 bg-gradient-to-r from-blue-50 to-blue-100" id="aset-section">
+  <div class="container mx-auto px-1">
+
+    <div class="institute-card featured bg-inherit border-cyan-950 rounded-lg shadow-2xl overflow-hidden">
+      <div class="featured-badge bg-cyan-950 text-white px-4 py-1 rounded-full absolute top-4 right-4">Featured</div>
+      <div class="institute-img bg-gray-100 flex items-center justify-center text-cyan-950 text-6xl h-48">
+        <i class="fas fa-cogs"></i>
+      </div>
+      <div class="institute-info p-6">
+        <h3 class="text-2xl font-bold text-sky-900 mb-2">Amity School of Engineering and Technology</h3>
+        <p class="text-gray-600 mb-4">Explore all programs offered by ASET with premium access for students.</p>
+        <div class="programs">
+          <h4 class="text-lg font-semibold text-gray-800 mb-2">Programs Offered:</h4>
+          <div class="program-list flex flex-wrap gap-2">
+            {% for program in aset_programs %}
+            <button class="program-tag bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition" 
+                    onclick="openSemesterPopup('{{ program.id }}', '{{ program.name }}')">
+              {{ program.name }}
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        <a href="{% url 'paper_list' %}" class="view-btn bg-blue-600 text-white px-4 py-2 rounded-lg mt-4 inline-block hover:bg-blue-700 transition">View All Papers <i class="fas fa-arrow-right ml-2"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Recently Added Papers Section -->
+<section class="recent-papers py-12 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <h2 class="text-2xl font-bold mb-6">Recently Added Papers</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for paper in recent_papers %}
+      <div class="paper-card bg-white rounded-lg shadow-md p-4">
+        <h3 class="text-lg font-semibold">{{ paper.subject_offering.subject.name }}</h3>
+        <p class="text-sm text-gray-600">{{ paper.subject_offering.semester.program.name }}</p>
+        <div class="mt-4 flex justify-between items-center">
+          <a href="{% url 'preview_paper' paper.id %}" target="_blank" class="text-blue-600 hover:underline">View Paper</a>
+          <a href="{{ paper.file.url }}" download class="text-green-600 hover:underline">Download</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Semester Popup -->
+<div id="semester-popup" style="display: none;" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+    <h3 id="popup-title" class="text-lg font-bold mb-4">Select Semester</h3>
+    <div id="semester-list" class="flex flex-wrap gap-2">
+      <!-- Semesters will be dynamically loaded here -->
+    </div>
+
+    <!-- Year and Subject Filters -->
+    <div id="filter-container" class="mt-4 hidden">
+      <label class="block font-medium mb-2 text-gray-700">Year</label>
+      <select id="year-filter" class="select w-full">
+        <option value="">All Years</option>
+      </select>
+
+      <label class="block font-medium mt-4 mb-2 text-gray-700">Subject</label>
+      <select id="subject-filter" class="select w-full">
+        <option value="">All Subjects</option>
+      </select>
+    </div>
+
+    <button onclick="closeSemesterPopup()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Close</button>
+    <button id="submit-filters" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Generate Report</button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Homepage search functionality
+document.getElementById('smart-search').addEventListener('input', debounce(function() {
+  const query = this.value.trim();
+  const suggestions = document.getElementById('search-suggestions');
+  
+  if (query.length < 3) {
+    suggestions.classList.add('hidden');
+    return;
+  }
+  
+  suggestions.innerHTML = '<div class="p-3 text-center text-gray-500">Loading...</div>';
+  suggestions.classList.remove('hidden');
+  
+  fetch(`/api/search/?q=${encodeURIComponent(query)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.length > 0) {
+        suggestions.innerHTML = data.map(item => `
+          <a href="${item.url}" class="block px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-0 transition-colors">
+            <div class="font-medium">${item.title}</div>
+            <div class="text-sm text-gray-500">${item.subject} • ${item.year}</div>
+          </a>
+        `).join('');
+      } else {
+        suggestions.innerHTML = '<div class="p-3 text-center text-gray-500">No results found</div>';
+      }
+    })
+    .catch(() => {
+      suggestions.innerHTML = '<div class="p-3 text-center text-red-500">Error loading results</div>';
+    });
+}, 300));
+
+// Close suggestions when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#smart-search') && !e.target.closest('#search-suggestions')) {
+    document.getElementById('search-suggestions').classList.add('hidden');
+  }
+});
+
+function openSemesterPopup(programId, programName) {
+  document.getElementById('popup-title').innerText = `Select Semester for ${programName}`;
+  const semesterList = document.getElementById('semester-list');
+  semesterList.innerHTML = '<div>Loading...</div>';
+
+  fetch(`/api/semesters/?program=${programId}`) // Corrected query parameter
+    .then(response => response.json())
+    .then(data => {
+      semesterList.innerHTML = data.map(semester => `
+        <button class="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-300 active:bg-blue-400 transition" 
+                onclick="selectSemester(${semester.id}, '${semester.number}')">
+          Semester ${semester.number}
+        </button>
+      `).join('');
+    });
+
+  document.getElementById('semester-popup').style.display = 'flex';
+}
+
+function closeSemesterPopup() {
+  document.getElementById('semester-popup').style.display = 'none';
+
+  // Reset the popup state
+  document.getElementById('semester-list').innerHTML = '';
+  document.getElementById('filter-container').classList.add('hidden');
+  document.getElementById('year-filter').innerHTML = '<option value="">All Years</option>';
+  document.getElementById('subject-filter').innerHTML = '<option value="">All Subjects</option>';
+}
+
+function selectSemester(semesterId, semesterName) {
+  const filterContainer = document.getElementById('filter-container');
+  filterContainer.classList.remove('hidden');
+
+  const submitButton = document.getElementById('submit-filters');
+  submitButton.classList.remove('hidden');
+  submitButton.onclick = submitFilters;
+
+  // Load years and subjects using existing methods
+  $('#semester-filter').val(semesterId).trigger('change');
+
+  // Populate year and subject dropdowns dynamically
+  fetch(`/api/subjects/?semester=${semesterId}`)
+    .then(response => response.json())
+    .then(data => {
+      const yearFilter = document.getElementById('year-filter');
+      const subjectFilter = document.getElementById('subject-filter');
+
+      // Clear existing options
+      yearFilter.innerHTML = '<option value="">All Years</option>';
+      subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+
+      // Populate years and subjects
+      const years = [...new Set(data.map(subject => subject.year))];
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.appendChild(option);
+      });
+
+      data.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject.id;
+        option.textContent = subject.name;
+        subjectFilter.appendChild(option);
+      });
+    });
+}
+
+function submitFilters() {
+  const selectedYears = Array.from(document.getElementById('year-filter').selectedOptions).map(option => option.value);
+  const selectedSubjects = Array.from(document.getElementById('subject-filter').selectedOptions).map(option => option.value);
+
+  if (selectedYears.length === 0 || selectedSubjects.length === 0) {
+    alert('Please select at least one year and one subject.');
+    return;
+  }
+
+  // Send the selected filters to the server
+  fetch('/api/generate-report/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      years: selectedYears,
+      subjects: selectedSubjects,
+    }),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Report generated successfully!');
+        // Optionally, redirect to the report page or download the report
+      } else {
+        alert('Failed to generate report. Please try again.');
+      }
+    })
+    .catch(() => {
+      alert('An error occurred while generating the report.');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block extrahead %}
+<style>
+.bulk-upload-form {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.btn-upload {
+    background: #417690;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-upload:hover {
+    background: #2e5266;
+}
+
+.help-text {
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.upload-instructions {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.upload-instructions h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.upload-instructions ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-upload-form">
+    <h1>{{ title }}</h1>
+    
+    <div class="upload-instructions">
+        <h4>Upload Instructions:</h4>
+        <ul>
+            <li>Upload a ZIP file containing PDF exam papers</li>
+            <li>Each PDF file will be created as a separate exam paper</li>
+            <li>File names will be used as paper titles (underscores replaced with spaces)</li>
+            <li>Optionally select a subject to assign to all papers</li>
+            <li>Only PDF files will be processed, other files will be ignored</li>
+        </ul>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="zip_file">ZIP File:</label>
+            <input type="file" id="zip_file" name="zip_file" accept=".zip" class="form-control" required>
+            <div class="help-text">Select a ZIP file containing PDF exam papers</div>
+        </div>
+
+        <div class="form-group">
+            <label for="subject">Subject (Optional):</label>
+            <select id="subject" name="subject" class="form-control">
+                <option value="">-- Select Subject (Optional) --</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">
+                        {{ subject.semester.program.institute.name }} - 
+                        {{ subject.semester.program.name }} - 
+                        {{ subject.semester.name }} - 
+                        {{ subject.name }} ({{ subject.code }})
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="help-text">If selected, all papers will be assigned to this subject</div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn-upload">
+                <i class="fas fa-upload"></i> Upload Papers
+            </button>
+            <a href="{% url 'admin:core_exampaper_changelist' %}" class="btn-upload" style="background: #666; text-decoration: none; margin-left: 10px;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('zip_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && !file.name.toLowerCase().endsWith('.zip')) {
+        alert('Please select a ZIP file.');
+        e.target.value = '';
+    }
+});
+</script>
+{% endblock %}

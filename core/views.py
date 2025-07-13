@@ -1,0 +1,229 @@
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import ListView, DetailView
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, Q
+from django.http import JsonResponse, FileResponse
+from .models import Institute, Program, Semester, Subject, ExamPaper
+from .serializers import PaperSerializer
+
+class HomeView(ListView):
+    template_name = 'core/home.html'
+    model = Institute
+    context_object_name = 'institutes'
+
+    def get_queryset(self):
+        return Institute.objects.filter(is_active=True).annotate(
+            paper_count=Count('programs__semesters__subject_offerings__exam_papers', distinct=True)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['featured_institutes'] = self.get_queryset().filter(is_featured=True)[:3]
+        context['recent_papers'] = ExamPaper.objects.select_related(
+            'subject_offering__subject',
+            'subject_offering__semester__program__institute',
+        ).order_by('-uploaded_at')[:8]
+
+        # Fetch all programs for ASET (Amity School of Engineering & Technology)
+        aset_institute = Institute.objects.filter(slug='amity-school-of-engineering-technology').first()
+        if aset_institute:
+            context['aset_programs'] = aset_institute.programs.all()
+
+        return context
+
+class PaperListView(ListView):
+    model = ExamPaper
+    template_name = 'core/papers.html'
+    paginate_by = 20
+    context_object_name = 'papers'
+
+    def get_queryset(self):
+        queryset = ExamPaper.objects.all().select_related(
+            'subject_offering',
+            'subject_offering__subject',
+            'subject_offering__semester',
+            'subject_offering__semester__program',
+            'subject_offering__semester__program__institute'
+        )
+
+                                                          
+        # Apply filters
+        if institute_slug := self.request.GET.get('institute'):
+            queryset = queryset.filter(
+                subject_offering__subject__semester__program__institute__slug=institute_slug
+            )
+
+        if program_id := self.request.GET.get('program'):
+            queryset = queryset.filter(
+                subject_offering__subject__semester__program_id=program_id
+            )
+
+        if semester_id := self.request.GET.get('semester'):
+            queryset = queryset.filter(
+                subject_offering__subject__semester_id=semester_id
+            )
+
+        if years := self.request.GET.getlist('year'):
+            queryset = queryset.filter(year__in=years)  # Apply year filter
+
+        if subjects := self.request.GET.getlist('subject'):
+            queryset = queryset.filter(subject_offering__subject_id__in=subjects)  # Apply subject filter
+
+        return queryset.order_by('-year', 'subject_offering__semester__program__institute__name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['institutes'] = Institute.objects.all()
+        context['years'] = ExamPaper.objects.values_list('year', flat=True).distinct().order_by('-year')
+
+        
+        # Preserve filter state
+        context['selected_institute'] = self.request.GET.get('institute')
+        context['selected_program'] = self.request.GET.get('program')
+        context['selected_semester'] = self.request.GET.get('semester')
+        context['selected_years'] = list(map(int, self.request.GET.getlist('year')))
+        context['selected_subjects'] = list(map(int, self.request.GET.getlist('subject')))
+        
+        return context
+
+class PaperDetailView(DetailView):
+    model = ExamPaper
+    template_name = 'core/paper_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        self.object.increment_download()
+        return response
+
+class FilterPapersView(View):
+    def get(self, request, *args, **kwargs):
+        # Debug: Print the received parameters
+        print("=" * 50)
+        print("FILTER REQUEST DEBUG:")
+        print("Received GET parameters:", dict(request.GET))
+        
+        queryset = ExamPaper.objects.all().select_related(
+            'subject_offering',
+            'subject_offering__subject',
+            'subject_offering__semester',
+            'subject_offering__semester__program',
+            'subject_offering__semester__program__institute'
+        )
+        
+        initial_count = queryset.count()
+        print(f"Initial paper count: {initial_count}")
+        
+        # Debug: Show available years and subjects
+        all_years = queryset.values_list('year', flat=True).distinct()
+        all_subjects = queryset.values_list('subject_offering__subject_id', 'subject_offering__subject__name').distinct()
+        print(f"Available years in database: {list(all_years)}")
+        print(f"Available subjects in database: {list(all_subjects)[:5]}...")  # Show first 5
+
+        # Apply filters
+        if institute_slug := request.GET.get('institute'):
+            queryset = queryset.filter(
+                subject_offering__semester__program__institute__slug=institute_slug
+            )
+            print(f"After institute filter: {queryset.count()} papers")
+
+        if program_id := request.GET.get('program'):
+            queryset = queryset.filter(
+                subject_offering__semester__program_id=program_id
+            )
+            print(f"After program filter: {queryset.count()} papers")
+
+        if semester_id := request.GET.get('semester'):
+            queryset = queryset.filter(
+                subject_offering__semester_id=semester_id
+            )
+            print(f"After semester filter: {queryset.count()} papers")
+
+        # Apply year filter - simple intersection
+        years = request.GET.getlist('year')
+        if years:
+            # Filter out empty values and convert to integers
+            year_list = []
+            for year in years:
+                if year and year.strip():
+                    try:
+                        year_list.append(int(year))
+                    except ValueError:
+                        continue
+            
+            if year_list:
+                queryset = queryset.filter(year__in=year_list)
+                print(f"After year filter: {queryset.count()} papers (filtered by: {year_list})")
+
+        # Apply subject filter - simple intersection
+        subjects = request.GET.getlist('subject')
+        if subjects:
+            # Filter out empty values and convert to integers
+            subject_list = []
+            for subject in subjects:
+                if subject and subject.strip():
+                    try:
+                        subject_list.append(int(subject))
+                    except ValueError:
+                        continue
+            
+            if subject_list:
+                queryset = queryset.filter(subject_offering__subject_id__in=subject_list)
+                print(f"After subject filter: {queryset.count()} papers (filtered by: {subject_list})")
+
+        # Count before sorting
+        final_count = queryset.count()
+        print(f"Final paper count before sorting: {final_count}")
+        print("=" * 50)
+
+        # Sorting logic
+        sort_by = request.GET.get('sort', 'recent')
+        if sort_by == 'alphabetical':
+            queryset = queryset.order_by('subject_offering__subject__name')
+        else:  # Default to recent
+            queryset = queryset.order_by('-year', '-uploaded_at')
+
+        papers = PaperSerializer(queryset, many=True).data
+        return JsonResponse({'papers': papers})
+
+def api_programs(request):
+    institute_slug = request.GET.get('institute')
+    programs = Program.objects.filter(
+        institute__slug=institute_slug
+    ).values('id', 'name')
+    return JsonResponse(list(programs), safe=False)
+
+def api_semesters(request):
+    program_id = request.GET.get('program')
+    semesters = Semester.objects.filter(
+        program_id=program_id
+    ).values('id', 'number')
+    return JsonResponse(list(semesters), safe=False)
+
+def api_subjects(request):
+    semester_id = request.GET.get('semester')
+    
+    if not semester_id:
+        return JsonResponse([], safe=False)
+
+    subjects = Subject.objects.filter(
+        offerings__semester_id=semester_id
+    ).distinct().values('id', 'name', 'code')
+
+    return JsonResponse(list(subjects), safe=False)
+
+def api_search(request):
+    query = request.GET.get('q', '')
+    papers = ExamPaper.objects.filter(
+        Q(title__icontains=query) |
+        Q(subject_offering__subject__name__icontains=query) |
+        Q(subject_offering__subject__code__icontains=query),
+        is_verified=True
+    )[:10]
+    serializer = PaperSerializer(papers, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+def preview_paper(request, paper_id):
+    paper = get_object_or_404(ExamPaper, id=paper_id)
+    file_path = paper.file.path  # Assuming 'file' is the field storing the PDF
+    return FileResponse(open(file_path, 'rb'), content_type='application/pdf')

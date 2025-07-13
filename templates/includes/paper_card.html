@@ -1,0 +1,39 @@
+<div class="paper-card group shadow-lg rounded-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300" x-data="{ showPreview: false }">
+    <div class="p-5 h-full flex flex-col">
+        <div class="flex justify-between items-start mb-3">
+            <span class="badge text-xs font-semibold py-1 px-2 rounded-full" :class="{
+                'bg-green-100 text-green-800': '{{ paper.paper_type }}' === 'E',
+                'bg-red-100 text-red-800': '{{ paper.paper_type }}' === 'B'
+            }">
+                {{ paper.get_paper_type_display }}
+            </span>
+            <span class="text-sm text-blue-600 font-semibold">
+                {{ paper.year }}
+            </span>
+        </div>
+        
+        <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{{ paper.subject_offering.subject.name }}</h3>
+        
+        <div class="flex items-center text-sm text-gray-600 mb-4 flex-wrap gap-y-1">
+            <span class="mr-3 flex items-center font-medium">
+                <i class="fas fa-bookmark mr-1 text-blue-500"></i> 
+                {{ paper.subject_offering.subject.code }}
+            </span>
+            <span class="flex items-center">
+                <i class="fas fa-graduation-cap mr-1 text-green-500"></i> 
+                Sem {{ paper.subject_offering.semester.number }}
+            </span>
+        </div>
+        
+        <div class="mt-auto flex justify-between items-center">
+            <button @click="showPreview = true" 
+                    class="text-blue-600 hover:text-blue-800 flex items-center transition-colors">
+                <i class="fas fa-eye mr-2"></i> Preview
+            </button>
+            <a href="{{ paper.file.url }}" download 
+               class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 text-sm rounded-lg hover:shadow-md transition-all">
+                <i class="fas fa-download mr-2"></i> Download
+            </a>
+        </div>
+    </div>
+</div>

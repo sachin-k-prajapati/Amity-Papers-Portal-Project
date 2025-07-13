@@ -1,0 +1,47 @@
+{% load static %}
+
+<header class="navbar sticky top-0 z-40 shadow-md">
+  <div class="container mx-auto px-4">
+    <div class="flex justify-between items-center py-3">
+      <!-- Logo with improved accessibility -->
+      <a href="{% url 'home' %}" class="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+        <img src="{% static 'images/AUMP_logo.png' %}" alt="Amity University" class="h-12 mr-3">
+        <div>
+          <h1 class="text-xl font-bold text-white">Amity Exam Repository</h1>
+          <p class="text-sm text-blue-200">Previous Year Papers</p>
+        </div>
+      </a>
+      
+      <!-- Desktop Navigation -->
+      <nav class="hidden md:flex items-center space-x-6">
+        <a href="{% url 'home' %}" class="nav-link">Home</a>
+        <a href="{% url 'paper_list' %}" class="nav-link">Browse Papers</a>
+        <a href="#" class="nav-link">Departments</a>
+        
+        <!-- Improved search bar -->
+        <div class="relative ml-4 group">
+          <input type="text" id="global-search" placeholder="Search papers..." 
+                 class="search-input pl-10 pr-4 py-2 rounded-full text-sm w-64 focus:w-72 transition-all duration-300">
+          <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 group-focus-within:text-blue-500"></i>
+          <div id="search-suggestions" class="hidden absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl overflow-hidden"></div>
+        </div>
+      </nav>
+      
+      <!-- Mobile Menu Button with animation -->
+      <button id="mobile-menu-button" class="md:hidden text-white text-2xl focus:outline-none">
+        <i class="fas fa-bars transition-transform duration-300" id="menu-icon"></i>
+      </button>
+    </div>
+    
+    <!-- Mobile Menu with better transitions -->
+    <div id="mobile-menu" class="hidden md:hidden pb-4 transition-all duration-300 ease-in-out transform origin-top">
+      <div class="pt-2 space-y-2">
+        <a href="{% url 'home' %}" class="mobile-nav-link">Home</a>
+        <a href="{% url 'paper_list' %}" class="mobile-nav-link">Browse Papers</a>
+        <div class="relative mt-2 px-2">
+          <input type="text" placeholder="Search..." class="search-input w-full px-4 py-2 rounded-full text-sm">
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

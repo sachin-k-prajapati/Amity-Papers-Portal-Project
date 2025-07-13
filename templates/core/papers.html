@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+  .select2-container .select2-selection--single {
+    height: 42px;
+    border-radius: 0.5rem;
+    padding-top: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row gap-8">
+    <!-- Filter Panel -->
+    <div class="lg:w-1/4">
+      {% include 'includes/filter_panel.html' %}
+    </div>
+    
+    <!-- Results -->
+    <div class="lg:w-3/4">
+      
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+          {% if filtered %}
+            {{ papers.paginator.count }} Papers Found
+          {% else %}
+            All Exam Papers
+          {% endif %}
+        </h1>
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-600">Sort:</span>
+          <select id="sort-dropdown" class="border rounded-lg px-3 py-1 text-sm">
+            <option value="recent">Most Recent</option>
+            <option value="alphabetical">Alphabetical</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Active Filters -->
+      {% if filtered %}
+      <div class="bg-blue-50 rounded-lg p-4 mb-6">
+        <div class="flex flex-wrap gap-2">
+          {% if institute %}
+          <span class="filter-tag bg-blue-100 text-blue-800">
+            Institute: {{ institute.name }} <button class="ml-1">×</button>
+          </span>
+          {% endif %}
+          {% for year in selected_years %}
+          <span class="filter-tag bg-amber-100 text-amber-800">
+            Year: {{ year }} <button class="ml-1">×</button>
+          </span>
+          {% endfor %}
+          <a href="." class="text-blue-600 hover:underline ml-auto self-center text-sm">
+            Clear All
+          </a>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Papers Grid -->
+      <div id="papers-container" class="papers-grid">
+        {% for paper in papers %}
+          {% include 'includes/paper_card.html' %}
+        {% empty %}
+          <div class="col-span-full text-center py-12">
+            <i class="fas fa-file-alt text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-600">No papers found</h3>
+            <p class="text-gray-500 mt-2">Try adjusting your filters</p>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Pagination -->
+      {% if papers.paginator.num_pages > 1 %}
+      <div class="mt-8">
+        {% include 'core/includes/pagination.html' %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
