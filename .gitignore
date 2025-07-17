@@ -65,7 +65,7 @@ yarn-error.log*
 .yarn-integrity
 
 # Tailwind CSS
-# /static/css/output.css
+/static/css/output.css
 
 # Coverage reports
 htmlcov/
