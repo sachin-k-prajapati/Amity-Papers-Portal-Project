@@ -6,6 +6,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse, FileResponse
 from .models import Institute, Program, Semester, Subject, ExamPaper
 from .serializers import PaperSerializer
+import re
 
 class HomeView(ListView):
     template_name = 'core/home.html'
@@ -19,23 +20,30 @@ class HomeView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['featured_institutes'] = self.get_queryset().filter(is_featured=True)[:3]
+        # context['featured_institutes'] = self.get_queryset().filter(is_featured=True)[:3]
         context['recent_papers'] = ExamPaper.objects.select_related(
             'subject_offering__subject',
             'subject_offering__semester__program__institute',
-        ).order_by('-uploaded_at')[:8]
+        ).order_by('-uploaded_at')[:6]
 
         # Fetch all programs for ASET (Amity School of Engineering & Technology)
         aset_institute = Institute.objects.filter(slug='amity-school-of-engineering-technology').first()
         if aset_institute:
             context['aset_programs'] = aset_institute.programs.all()
+            
+        # Total Counts
+        context['total_institutes'] = Institute.objects.filter(is_active=True).count()
+        context['total_papers'] = ExamPaper.objects.count()
+        context['total_subjects'] = Subject.objects.count()
 
         return context
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 class PaperListView(ListView):
     model = ExamPaper
     template_name = 'core/papers.html'
-    paginate_by = 20
+    paginate_by = 2
     context_object_name = 'papers'
 
     def get_queryset(self):
@@ -47,7 +55,6 @@ class PaperListView(ListView):
             'subject_offering__semester__program__institute'
         )
 
-                                                          
         # Apply filters
         if institute_slug := self.request.GET.get('institute'):
             queryset = queryset.filter(
@@ -65,27 +72,69 @@ class PaperListView(ListView):
             )
 
         if years := self.request.GET.getlist('year'):
-            queryset = queryset.filter(year__in=years)  # Apply year filter
+            queryset = queryset.filter(year__in=years)
 
         if subjects := self.request.GET.getlist('subject'):
-            queryset = queryset.filter(subject_offering__subject_id__in=subjects)  # Apply subject filter
+            queryset = queryset.filter(subject_offering__subject_id__in=subjects)
 
-        return queryset.order_by('-year', 'subject_offering__semester__program__institute__name')
+        # Sorting
+        sort_by = self.request.GET.get('sort', 'recent')
+        if sort_by == 'alphabetical':
+            queryset = queryset.order_by('subject_offering__subject__name')
+        else:  # Default to recent
+            queryset = queryset.order_by('-year', '-uploaded_at')
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Get the filtered queryset
+        queryset = self.get_queryset()
+        
+        # Create paginator
+        paginator = Paginator(queryset, self.paginate_by)
+        page = self.request.GET.get('page')
+        
+        try:
+            papers = paginator.page(page)
+        except PageNotAnInteger:
+            papers = paginator.page(1)
+        except EmptyPage:
+            papers = paginator.page(paginator.num_pages)
+            
+        context['papers'] = papers
         context['institutes'] = Institute.objects.all()
         context['years'] = ExamPaper.objects.values_list('year', flat=True).distinct().order_by('-year')
-
         
         # Preserve filter state
         context['selected_institute'] = self.request.GET.get('institute')
         context['selected_program'] = self.request.GET.get('program')
         context['selected_semester'] = self.request.GET.get('semester')
-        context['selected_years'] = list(map(int, self.request.GET.getlist('year')))
-        context['selected_subjects'] = list(map(int, self.request.GET.getlist('subject')))
+        context['selected_years'] = list(map(int, self.request.GET.getlist('year', [])))
+        context['selected_subjects'] = list(map(int, self.request.GET.getlist('subject', [])))
+        context['sort_by'] = self.request.GET.get('sort', 'recent')
         
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # AJAX request - return JSON
+            papers_data = {
+                'papers': [{
+                    'id': paper.id,
+                    'title': paper.title,
+                    # Add other fields you need
+                } for paper in context['papers']],
+                'paginator': {
+                    'num_pages': context['papers'].paginator.num_pages,
+                    'count': context['papers'].paginator.count,
+                }
+            }
+            return JsonResponse(papers_data)
+        else:
+            # Normal request - return HTML
+            return super().render_to_response(context, **response_kwargs)
 
 class PaperDetailView(DetailView):
     model = ExamPaper
@@ -213,13 +262,32 @@ def api_subjects(request):
     return JsonResponse(list(subjects), safe=False)
 
 def api_search(request):
-    query = request.GET.get('q', '')
-    papers = ExamPaper.objects.filter(
-        Q(title__icontains=query) |
-        Q(subject_offering__subject__name__icontains=query) |
-        Q(subject_offering__subject__code__icontains=query),
-        is_verified=True
-    )[:10]
+    query = request.GET.get('q', '').strip()
+    
+    # Debugging: Log the search query
+    print(f"Search query received: {query}")
+    
+    # If query matches a subject code pattern like "CS301" or "MA104"
+    code_pattern = r'^[A-Za-z]{2,4}\d{3,4}$'
+
+    if re.match(code_pattern, query):
+        # Prioritize exact match on subject code
+        papers = ExamPaper.objects.filter(
+            subject_offering__subject__code__iexact=query,
+        )
+    else:
+        # General full-text search
+        papers = ExamPaper.objects.filter(
+            Q(subject_offering__subject__name__icontains=query) |
+            Q(subject_offering__subject__code__icontains=query),
+        )
+    
+    # Limit results for better performance
+    papers = papers[:10]
+    
+    # Debugging: Log the number of results
+    print(f"Number of results found: {papers.count()}")
+    
     serializer = PaperSerializer(papers, many=True)
     return JsonResponse(serializer.data, safe=False)
 

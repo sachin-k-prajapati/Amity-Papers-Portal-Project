@@ -22,96 +22,67 @@
 {% block content %}
 <!-- Hero Section with Gradient -->
 <section class="hero-section hero-gradient text-white py-20 md:py-32 relative">
-  <div class="absolute inset-0 opacity-10 bg-cover bg-center" 
+  <div class="absolute inset-0 opacity-50 bg-cover bg-center animate-bounce" 
        style="background-image: url('{% static 'images/amity_bg.png' %}')"></div>
   
   <div class="container mx-auto px-4 text-center relative z-10">
-    <h1 class="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">
+    <h1 class="text-6xl md:text-6xl font-bold mb-6 animate-fade-in">
       Amity University Exam Repository
     </h1>
-    <p class="text-xl mb-8 max-w-2xl mx-auto">
-      Access 10,000+ previous year papers with intelligent search
+    <p class="text-2xl font-semibold mb-8 max-w-2xl mx-auto">
+      Access {{ total_papers|default:"10,000" }}+ previous year papers with intelligent search
     </p>
     
-    <!-- Smart Search with Typeahead -->
-    <div class="max-w-2xl mx-auto relative">
+    <!-- Smart Search Container -->
+    <div class="max-w-2xl mx-auto relative z-50">
       <div class="relative">
-        <input type="text" id="smart-search" 
-               class="w-full py-4 px-6 rounded-full shadow-lg focus:outline-none text-gray-800 pr-12"
-               placeholder="Try 'CS301 mid sem 2023' or 'MBA finance papers'">
-        <button class="absolute right-3 top-3 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition">
+        <input type="text" name="q" id="smart-search"
+              class="w-full py-4 px-6 rounded-full shadow-inner focus:outline-none text-gray-800 pr-12 transition-all duration-300 focus:ring-4 focus:ring-blue-300"
+              placeholder="Search by subject code or name (e.g., 'CSE301', 'Operating Systems')">
+        <button type="submit" class="absolute right-3 top-3 text-gray-700 p-2 rounded-full hover:bg-lime-200 transition">
           <i class="fas fa-search"></i>
         </button>
       </div>
-      <div id="search-suggestions" class="hidden absolute z-10 w-full mt-2 bg-white rounded-lg shadow-xl overflow-hidden"></div>
+      
+      <!-- Updated Suggestions Container -->
+      <div id="search-suggestions"
+          class="hidden absolute w-full z-50 bg-white rounded-xl shadow-2xl overflow-hidden mt-1 max-h-96 overflow-y-auto">
+        <!-- Suggestions will be loaded here -->
+      </div>
     </div>
-    
+
     <!-- Stats Bar -->
     <div class="mt-12 flex flex-wrap justify-center gap-4">
       <div class="stat-box">
         <div class="text-3xl font-bold">{{ total_papers|default:"10,000+" }}</div>
-        <div class="text-sm opacity-80">Exam Papers</div>
+        <div class="text-sm opacity-100">Exam Papers</div>
       </div>
       <div class="stat-box">
         <div class="text-3xl font-bold">{{ total_subjects|default:"500+" }}</div>
-        <div class="text-sm opacity-80">Subjects</div>
+        <div class="text-sm opacity-100">Subjects</div>
       </div>
       <div class="stat-box">
         <div class="text-3xl font-bold">{{ total_institutes|default:"20+" }}</div>
-        <div class="text-sm opacity-80">Institutes</div>
+        <div class="text-sm opacity-100">Institutes</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Quick Access -->
-<div class="quick-access bg-white py-4 shadow-sm sticky top-0 z-10 border-b">
-  <div class="container mx-auto px-4">
-    <div class="flex flex-wrap justify-center gap-2 md:gap-4">
-      <a href="#engineering" class="quick-access-btn">
-        <i class="fas fa-microchip mr-2"></i> Engineering
-      </a>
-      <a href="#" class="quick-access-btn">
-        <i class="fas fa-flask mr-2"></i> Science
-      </a>
-      <a href="#" class="quick-access-btn">
-        <i class="fas fa-briefcase mr-2"></i> Management
-      </a>
-      <a href="#" class="quick-access-btn">
-        <i class="fas fa-gavel mr-2"></i> Law
-      </a>
-      <a href="#" class="quick-access-btn bg-red-100 text-red-800 hover:bg-red-200">
-        <i class="fas fa-star mr-2"></i> Top Downloads
-      </a>
-    </div>
-  </div>
-</div>
-
 <!-- ASET Section -->
-<section class="py-16 bg-gradient-to-r from-blue-50 to-blue-100" id="aset-section">
-  <div class="container mx-auto px-1">
-
-    <div class="institute-card featured bg-inherit border-cyan-950 rounded-lg shadow-2xl overflow-hidden">
-      <div class="featured-badge bg-cyan-950 text-white px-4 py-1 rounded-full absolute top-4 right-4">Featured</div>
-      <div class="institute-img bg-gray-100 flex items-center justify-center text-cyan-950 text-6xl h-48">
-        <i class="fas fa-cogs"></i>
-      </div>
-      <div class="institute-info p-6">
-        <h3 class="text-2xl font-bold text-sky-900 mb-2">Amity School of Engineering and Technology</h3>
-        <p class="text-gray-600 mb-4">Explore all programs offered by ASET with premium access for students.</p>
-        <div class="programs">
-          <h4 class="text-lg font-semibold text-gray-800 mb-2">Programs Offered:</h4>
-          <div class="program-list flex flex-wrap gap-2">
-            {% for program in aset_programs %}
-            <button class="program-tag bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition" 
-                    onclick="openSemesterPopup('{{ program.id }}', '{{ program.name }}')">
-              {{ program.name }}
-            </button>
-            {% endfor %}
-          </div>
-        </div>
-        <a href="{% url 'paper_list' %}" class="view-btn bg-blue-600 text-white px-4 py-2 rounded-lg mt-4 inline-block hover:bg-blue-700 transition">View All Papers <i class="fas fa-arrow-right ml-2"></i></a>
-      </div>
+<section class="py-16 bg-gradient-to-r from-blue-50 to-blue-100 relative" id="aset-section">
+  <div class="container mx-auto px-4 relative z-10">
+    <h3 class="text-5xl font-extrabold text-center text-white mb-8">Amity School of Engineering & Technology</h3>
+    <p class="text-center text-white mb-12 max-w-3xl mx-auto">
+      All programs offered by ASET. Click on any program to view its papers.
+    </p>
+    <div class="flex flex-wrap justify-center gap-6">
+      {% for program in aset_programs %}
+      <button onclick="openSemesterPopup('{{ program.id }}', '{{ program.name }}')"
+              class="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold text-lg py-4 px-6 rounded-lg shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+        {{ program.name }}
+      </button>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -184,8 +155,10 @@ document.getElementById('smart-search').addEventListener('input', debounce(funct
       if (data.length > 0) {
         suggestions.innerHTML = data.map(item => `
           <a href="${item.url}" class="block px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-0 transition-colors">
-            <div class="font-medium">${item.title}</div>
-            <div class="text-sm text-gray-500">${item.subject} • ${item.year}</div>
+            <div class="font-medium text-blue-600">${item.subject_code} • ${item.subject} • ${item.year}</div>
+            <div class="text-sm text-gray-500">
+              ${item.program} • ${item.semester}-SEM • ${item.institute}
+            </div>
           </a>
         `).join('');
       } else {
