@@ -82,7 +82,8 @@
             </div>
             <div class="relative mb-2">
                 <input type="text" id="year-search" placeholder="Search years..." 
-                       class="input w-full text-sm pl-8">
+                       class="input w-full text-sm pl-8"
+                       value="{{ year_query|default:'' }}">
                 <i class="fas fa-search absolute left-2 top-2 text-gray-400 text-sm"></i>
             </div>
             <div class="max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">

@@ -25,10 +25,10 @@ class ExamPortalFilters {
     $('#program-filter').change(() => this.loadSemesters());
     
     // Year/Subject filters
-    $('.multi-select-filter').change(() => this.updateResults());
     $('#semester-filter').change(() => {
       this.loadSubjects();
     });
+    $('.multi-select-filter').change(() => this.updateResults());
 
     $('#subject-search').on('input', function () {
       const query = $(this).val().toLowerCase();
@@ -108,19 +108,34 @@ class ExamPortalFilters {
   loadSubjects() {
     const semesterId = $('#semester-filter').val();
     const $subjectContainer = $('#subject-search').closest('div').next();
+    const $yearContainer = $('#year-search').closest('div').next();
     
     $subjectContainer.empty();
+    $yearContainer.empty();
 
     if (semesterId) {
       $.get(`/api/subjects/?semester=${semesterId}`, data => {
+        // Render subjects as before
         data.forEach(subject => {
-          const checkbox = `
+          const subjectCheckboxes = `
             <label class="subject-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
               <input type="checkbox" name="subject" value="${subject.id}" class="mr-2 rounded text-blue-500">
               <span>${subject.code} - ${subject.name}</span>
             </label>
           `;
-          $subjectContainer.append(checkbox);
+          $subjectContainer.append(subjectCheckboxes);
+        });
+
+        // Get distinct years
+        const years = [...new Set(data.map(subject => subject.year))];
+        years.forEach(year => {
+          const yearCheckboxes = `
+            <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
+              <input type="checkbox" name="year" value="${year}" class="mr-2 rounded text-blue-500">
+              <span>${year}</span>
+            </label>
+          `;
+          $yearContainer.append(yearCheckboxes);
         });
       });
     }

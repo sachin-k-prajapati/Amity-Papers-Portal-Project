@@ -4,7 +4,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
 from django.http import JsonResponse, FileResponse
-from .models import Institute, Program, Semester, Subject, ExamPaper
+from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper
 from .serializers import PaperSerializer
 import re
 
@@ -102,10 +102,9 @@ class PaperListView(ListView):
             papers = paginator.page(1)
         except EmptyPage:
             papers = paginator.page(paginator.num_pages)
-            
+        
         context['papers'] = papers
         context['institutes'] = Institute.objects.all()
-        context['years'] = ExamPaper.objects.values_list('year', flat=True).distinct().order_by('-year')
         
         # Preserve filter state
         context['selected_institute'] = self.request.GET.get('institute')
@@ -251,15 +250,32 @@ def api_semesters(request):
 
 def api_subjects(request):
     semester_id = request.GET.get('semester')
-    
+
     if not semester_id:
         return JsonResponse([], safe=False)
 
-    subjects = Subject.objects.filter(
-        offerings__semester_id=semester_id
-    ).distinct().values('id', 'name', 'code')
+    offerings = SubjectOffering.objects.filter(
+        semester_id=semester_id,
+        exam_papers__isnull=False  # Only include those with papers
+    ).select_related('subject').prefetch_related('exam_papers').distinct()
 
-    return JsonResponse(list(subjects), safe=False)
+    response_data = []
+    # Collect unique subjects and their years
+    seen = set()
+    for offering in offerings:
+        years = offering.exam_papers.values_list('year', flat=True).distinct()
+        for year in years:
+            if (offering.subject.id, year) not in seen:
+                seen.add((offering.subject.id, year))
+                response_data.append({
+                    "id": offering.subject.id,
+                    "name": offering.subject.name,
+                    "code": offering.subject.code,
+                    "year": year,
+                })
+
+    return JsonResponse(response_data, safe=False)
+
 
 def api_search(request):
     query = request.GET.get('q', '').strip()
