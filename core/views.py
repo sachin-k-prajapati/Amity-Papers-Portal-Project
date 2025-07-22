@@ -7,6 +7,8 @@ from django.http import JsonResponse, FileResponse
 from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper
 from .serializers import PaperSerializer
 import re
+import json
+from django.views.decorators.csrf import csrf_exempt
 
 class HomeView(ListView):
     template_name = 'core/home.html'
@@ -38,12 +40,10 @@ class HomeView(ListView):
 
         return context
 
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
 class PaperListView(ListView):
     model = ExamPaper
     template_name = 'core/papers.html'
-    paginate_by = 2
+    paginate_by = 3
     context_object_name = 'papers'
 
     def get_queryset(self):
@@ -89,21 +89,6 @@ class PaperListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Get the filtered queryset
-        queryset = self.get_queryset()
-        
-        # Create paginator
-        paginator = Paginator(queryset, self.paginate_by)
-        page = self.request.GET.get('page')
-        
-        try:
-            papers = paginator.page(page)
-        except PageNotAnInteger:
-            papers = paginator.page(1)
-        except EmptyPage:
-            papers = paginator.page(paginator.num_pages)
-        
-        context['papers'] = papers
         context['institutes'] = Institute.objects.all()
         
         # Preserve filter state
@@ -134,15 +119,6 @@ class PaperListView(ListView):
         else:
             # Normal request - return HTML
             return super().render_to_response(context, **response_kwargs)
-
-class PaperDetailView(DetailView):
-    model = ExamPaper
-    template_name = 'core/paper_detail.html'
-
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
-        self.object.increment_download()
-        return response
 
 class FilterPapersView(View):
     def get(self, request, *args, **kwargs):
@@ -307,7 +283,75 @@ def api_search(request):
     serializer = PaperSerializer(papers, many=True)
     return JsonResponse(serializer.data, safe=False)
 
+@csrf_exempt
+def api_generateReport(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    
+    print("Received data for report generation:", data)
+    
+    institute_slug = data.get('institute')
+    program = data.get('program')
+    semester = data.get('semester')
+    years = data.get('years', [])
+    subjects = data.get('subjects', [])
+    
+    # Debugging: Log the received parameters
+    print(f"Generating report with parameters: institute={institute_slug}, program={program}, semester={semester}, years={years}, subjects={subjects}")
+
+    # fetching the paper based on the filters
+    queryset = ExamPaper.objects.filter(
+        subject_offering__semester__program__institute__slug=institute_slug
+    ).select_related(
+        'subject_offering',
+        'subject_offering__subject',
+        'subject_offering__semester',
+        'subject_offering__semester__program',
+        'subject_offering__semester__program__institute'
+    )
+    
+    if institute_slug:
+        queryset = queryset.filter(subject_offering__semester__program__institute__slug=institute_slug)
+        
+    print(f"After institute filter: {queryset.count()} papers")
+
+    if program:
+        queryset = queryset.filter(subject_offering__semester__program_id=program)
+
+    print(f"After program filter: {queryset.count()} papers")
+    
+    if semester:
+        queryset = queryset.filter(subject_offering__semester_id=semester)
+
+    print(f"After semester filter: {queryset.count()} papers")
+    
+    if years:
+        queryset = queryset.filter(year__in=years)
+        
+    print(f"After year filter: {queryset.count()} papers (filtered by: {years})")
+
+    if subjects:
+        queryset = queryset.filter(subject_offering__subject_id__in=subjects)
+        
+    print(f"After subject filter: {queryset.count()} papers (filtered by: {subjects})")
+        
+    # Count before sorting
+    initial_count = queryset.count()
+    print(f"Initial paper count: {initial_count}")
+
+    papers = PaperSerializer(queryset, many=True)
+    return JsonResponse({'success': True, 'papers': papers.data})
+
+@csrf_exempt
+def api_report(request):
+    return render(request, 'core/report.html')
+
 def preview_paper(request, paper_id):
     paper = get_object_or_404(ExamPaper, id=paper_id)
-    file_path = paper.file.path  # Assuming 'file' is the field storing the PDF
+    file_path = paper.file.path  # 'file' is the field storing the PDF
     return FileResponse(open(file_path, 'rb'), content_type='application/pdf')

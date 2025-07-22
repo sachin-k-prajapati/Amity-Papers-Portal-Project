@@ -26,7 +26,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.HomeView.as_view(), name='home'),
     path('papers/', views.PaperListView.as_view(), name='paper_list'),
-    path('papers/<int:pk>/', views.PaperDetailView.as_view(), name='paper_detail'),
     
     # API Endpoints
     path('api/programs/', views.api_programs, name='api_programs'),
@@ -40,7 +39,8 @@ urlpatterns = [
     
     # Filter papers
     path('api/filter-papers/', FilterPapersView.as_view(), name='filter-papers'),
-    
+    path('api/generate-report/', views.api_generateReport, name='api_generateReport'),
+    path('report.html/', views.api_report, name='api_report'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

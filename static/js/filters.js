@@ -126,17 +126,19 @@ class ExamPortalFilters {
           $subjectContainer.append(subjectCheckboxes);
         });
 
-        // Get distinct years
+        // Get distinct years and display in grid
         const years = [...new Set(data.map(subject => subject.year))];
+        let yearGrid = '<div class="grid grid-cols-2 md:grid-cols-3 gap-2">';
         years.forEach(year => {
-          const yearCheckboxes = `
-            <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
+          yearGrid += `
+            <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">
               <input type="checkbox" name="year" value="${year}" class="mr-2 rounded text-blue-500">
               <span>${year}</span>
             </label>
           `;
-          $yearContainer.append(yearCheckboxes);
         });
+        yearGrid += '</div>';
+        $yearContainer.html(yearGrid);
       });
     }
   }
@@ -150,6 +152,11 @@ class ExamPortalFilters {
   }
 
   applyFilters() {
+    //scroll to papers container starting
+    $('html, body').animate({
+      scrollTop: $('#papers-container').offset().top - 140
+    }, 500);
+
     // Collect year filters - simple approach
     const yearValues = [];
     $('input[name="year"]:checked').each(function() {
@@ -210,32 +217,32 @@ class ExamPortalFilters {
               <div class="paper-card group shadow-lg rounded-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                 <div class="p-5 h-full flex flex-col">
                   <div class="flex justify-between items-start mb-3">
-                    <span class="badge text-xs font-semibold py-1 px-2 rounded-full ${paper.paper_type === 'End Sem' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    <span class="badge text-xs font-semibold py-1 px-2 rounded-full ${paper.paper_type === 'End Sem' ? 'bg-green-200 text-green-950' : 'bg-red-100 text-red-800'}">
                       ${paper.paper_type}
                     </span>
-                    <span class="text-sm text-blue-600 font-semibold">
+                    <span class="text-sm text-blue-900 font-semibold">
                       ${paper.year}
                     </span>
                   </div>
                   
-                  <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2">${paper.subject}</h3>
+                  <h3 class="text-lg font-bold text-teal-950 mb-2 line-clamp-2">${paper.subject}</h3>
                   
                   <div class="flex items-center text-sm text-gray-600 mb-4 flex-wrap gap-y-1">
                     <span class="mr-3 flex items-center font-medium">
-                      <i class="fas fa-bookmark mr-1 text-blue-500"></i> 
+                      <i class="fas fa-bookmark mr-1 text-blue-700"></i> 
                       ${paper.subject_code}
                     </span>
                     <span class="flex items-center">
-                      <i class="fas fa-graduation-cap mr-1 text-green-500"></i> 
+                      <i class="fas fa-graduation-cap mr-1 text-green-800"></i> 
                       Sem ${paper.semester}
                     </span>
                   </div>
                   
                   <div class="mt-auto flex justify-between items-center">
-                    <a href="${paper.url}" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center transition-colors">
+                    <a href="${paper.url}" target="_blank" class="text-cyan-900 hover:text-pink-800 flex font-medium items-center transition-colors">
                       <i class="fas fa-eye mr-2"></i> Preview
                     </a>
-                    <a href="${paper.url}" download class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 text-sm rounded-lg hover:shadow-md transition-all">
+                    <a href="${paper.url}" download class="hover:bg-yellow-400 text-green-900 py-2 px-4 font-medium rounded-lg hover:shadow-md transition-all">
                       <i class="fas fa-download mr-2"></i> Download
                     </a>
                   </div>
@@ -247,7 +254,7 @@ class ExamPortalFilters {
       },
       error: () => {
         alert('Failed to fetch papers. Please try again.');
-      }
+      },
     });
   }
 
@@ -277,6 +284,8 @@ class ExamPortalFilters {
     // Clear subjects container
     const $subjectContainer = $('#subject-search').closest('div').next();
     $subjectContainer.empty();
+    const $yearContainer = $('#year-search').closest('div').next();
+    $yearContainer.empty();
     
     // Reload the page or apply filters with empty values
     this.applyFilters();

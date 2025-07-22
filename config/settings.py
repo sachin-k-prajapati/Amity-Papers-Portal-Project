@@ -133,3 +133,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory for media files (uploa
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Global settings for REST framework
+REST_FRAMEWORK = {
+    # pagination settings
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 2,  # Default number of items per page
+}

@@ -18,11 +18,11 @@
 
 /* Components */
 .btn-primary {
-  @apply flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl;
+  @apply flex items-center rounded-xl bg-gradient-to-r from-[#071a3f] to-[#245784] px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl;
 }
 
 .paper-card {
-  @apply transform overflow-hidden rounded-xl border-l-4 border-blue-500 bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  @apply transform overflow-hidden rounded-xl border-l-4 border-cyan-800 bg-sky-50 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
 }
 
 /* Header */
@@ -38,7 +38,7 @@
 
 /* Responsive Grids */
 .papers-grid {
-  @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3;
 }
 
 /* Loading Spinner */
@@ -106,6 +106,10 @@ body {
 
 .max-h-\[90vh\] {
   max-height: 90vh;
+}
+
+.w-2\/5 {
+    width: 40%;
 }
 
 .min-h-\[calc\(100vh-10rem\)\] {

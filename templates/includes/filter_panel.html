@@ -1,10 +1,10 @@
-<div class="filter-panel bg-white rounded-xl shadow-md p-6 sticky top-12 transition-all duration-300 hover:shadow-lg">
+<div class="filter-panel bg-cyan-50 rounded-xl shadow-md p-6 sticky top-12 transition-all duration-300 hover:shadow-lg">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-bold flex items-center">
-            <i class="fas fa-filter mr-2 text-blue-500"></i>
+            <i class="fas fa-filter mr-2 text-sky-800"></i>
             Filter Papers
         </h2>
-        <button id="clear-filters" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+        <button id="clear-filters" class="text-sm text-sky-950 hover:text-blue-800 flex items-center">
             <i class="fas fa-sync-alt mr-1"></i> Reset
         </button>
     </div>
@@ -13,9 +13,9 @@
     <div class="space-y-6">
         <!-- Institute with loading indicator -->
         <div>
-            <label class="block font-medium mb-2 text-gray-700">Institute</label>
+            <label class="block font-medium mb-2 text-gray-900">Institute</label>
             <div class="relative">
-                <select id="institute-filter" class="select w-full">
+                <select id="institute-filter" class="select bg-sky-100 border-slate-950 rounded-lg border-2 w-full">
                     <option value="">All Institutes</option>
                     {% for institute in institutes %}
                     <option value="{{ institute.slug }}" 
@@ -25,16 +25,16 @@
                     {% endfor %}
                 </select>
                 <div id="institute-loading" class="absolute right-3 top-2.5 hidden">
-                    <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                    <i class="fas fa-spinner fa-spin text-slate-700"></i>
                 </div>
             </div>
         </div>
         
         <!-- Program with loading state -->
         <div id="program-filter-container">
-            <label class="block font-medium mb-2 text-gray-700">Program</label>
+            <label class="block font-medium mb-2 text-gray-900">Program</label>
             <div class="relative">
-                <select id="program-filter" class="select w-full" {% if not selected_institute %}disabled{% endif %}>
+                <select id="program-filter" class="select bg-sky-100 border-slate-950 rounded-lg border-2 w-full" {% if not selected_institute %}disabled{% endif %}>
                     {% if selected_institute %}
                         <option value="">All Programs</option>
                         {% for program in programs %}
@@ -54,9 +54,9 @@
         
         <!-- Semester with loading state -->
         <div id="semester-filter-container">
-            <label class="block font-medium mb-2 text-gray-700">Semester</label>
+            <label class="block font-medium mb-2 text-gray-900">Semester</label>
             <div class="relative">
-                <select id="semester-filter" class="select w-full" {% if not selected_program %}disabled{% endif %}>
+                <select id="semester-filter" class="select bg-sky-100 border-slate-950 rounded-lg border-2 w-full" {% if not selected_program %}disabled{% endif %}>
                     {% if selected_program %}
                         <option value="">All Semesters</option>
                         {% for semester in semesters %}
@@ -77,40 +77,50 @@
         <!-- Year Multi-select with search -->
         <div>
             <div class="flex justify-between items-center mb-2">
-                <label class="block font-medium text-gray-700">Year</label>
-                <button id="toggle-years" class="text-xs text-blue-600 hover:text-blue-800">Toggle All</button>
+                <label class="block font-medium text-gray-900">Year</label>
+                <button id="toggle-years" class="text-xs text-sky-950 hover:text-blue-800">Toggle All</button>
             </div>
             <div class="relative mb-2">
                 <input type="text" id="year-search" placeholder="Search years..." 
-                       class="input w-full text-sm pl-8"
+                       class="input bg-sky-100 border-slate-950 border-2 rounded-lg w-full text-sm pl-8"
                        value="{{ year_query|default:'' }}">
-                <i class="fas fa-search absolute left-2 top-2 text-gray-400 text-sm"></i>
+                <i class="fas fa-search absolute left-2 top-1 text-gray-400 text-sm"></i>
             </div>
-            <div class="max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
-                {% for year in years %}
-                <label class="flex items-center py-1 px-2 hover:bg-gray-100 rounded transition-colors year-option">
-                    <input type="checkbox" name="year" value="{{ year }}" 
-                           class="mr-2 rounded text-blue-500 focus:ring-blue-500"
-                           {% if year in selected_years %}checked{% endif %}>
-                    {{ year }}
-                </label>
-                {% endfor %}
+            <div class="max-h-48 overflow-y-auto p-2 bg-sky-100 border-slate-950 border-2 rounded-lg ">
+                {% if years %}
+                    {% for year in years %}
+                    <label class="flex items-center py-1 px-2 hover:bg-gray-100 rounded transition-colors year-option">
+                        <input type="checkbox" name="year" value="{{ year }}" 
+                            class="mr-2 rounded text-blue-500 focus:ring-blue-500"
+                            {% if year in selected_years %}checked{% endif %}>
+                        {{ year }}
+                    </label>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-gray-800 text-sm">
+                        {% if selected_semester %}
+                            No years found
+                        {% else %}
+                            Select semester to see years
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </div>
         
         <!-- Subject Search with improved UX -->
         <div>
             <div class="flex justify-between items-center mb-2">
-                <label class="block font-medium text-gray-700">Subject</label>
-                <button id="toggle-subjects" class="text-xs text-blue-600 hover:text-blue-800">Toggle All</button>
+                <label class="block font-medium text-gray-900">Subject</label>
+                <button id="toggle-subjects" class="text-xs text-sky-950 hover:text-blue-800">Toggle All</button>
             </div>
             <div class="relative mb-2">
                 <input type="text" id="subject-search" placeholder="Search subjects..." 
-                       class="input w-full text-sm pl-8"
+                       class="input w-full bg-sky-100 border-slate-950 rounded-lg border-2 text-sm pl-8"
                        value="{{ subject_query|default:'' }}">
-                <i class="fas fa-search absolute left-2 top-2 text-gray-400 text-sm"></i>
+                <i class="fas fa-search absolute left-2 top-1 text-gray-400 text-sm"></i>
             </div>
-            <div class="max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="max-h-48 overflow-y-auto p-2 bg-sky-100 border-slate-950 border-2 rounded-lg">
                 {% if subjects %}
                     {% for subject in subjects %}
                     <label class="subject-option flex items-center py-1 px-2 hover:bg-gray-100 rounded transition-colors">
@@ -121,7 +131,7 @@
                     </label>
                     {% endfor %}
                 {% else %}
-                    <div class="text-center py-4 text-gray-500 text-sm">
+                    <div class="text-center py-4 text-gray-800 text-sm">
                         {% if selected_semester %}
                             No subjects found
                         {% else %}
@@ -132,8 +142,8 @@
             </div>
         </div>
     </div>
-    
-    <button id="apply-filters" class="btn-primary w-full mt-6 group">
+
+    <button id="apply-filters" class="btn-primary bg-sky-950 w-full mt-6 group">
         <span class="group-hover:scale-105 transition-transform">
             <i class="fas fa-check-circle mr-2"></i> Apply Filters
         </span>
