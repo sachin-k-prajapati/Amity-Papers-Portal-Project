@@ -15,15 +15,15 @@
     if (papers) {
       const parsedPapers = JSON.parse(papers);
       if (parsedPapers.length > 0) {
-        let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">';
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-8">';
         parsedPapers.forEach(paper => {
           html += `
             <div class="paper-card bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col justify-between transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div>
                 <h3 class="text-lg font-semibold text-blue-700 mb-2">${paper.subject || ''}</h3>
-                <p class="text-sm text-gray-500 mb-1">Year: ${paper.year || ''}</p>
-                <p class="text-sm text-gray-500 mb-1">Program: ${paper.program || ''}</p>
-                <p class="text-sm text-gray-500 mb-1">Semester: ${paper.semester || ''}</p>
+                <p class="text-sm text-gray-800 mb-1">Year: ${paper.year || ''}</p>
+                <p class="text-sm text-gray-800 mb-1">Program: ${paper.program || ''}</p>
+                <p class="text-sm text-gray-800 mb-1">Semester: ${paper.semester || ''}</p>
               </div>
               <div class="mt-4 flex justify-between items-center">
                 <a href="${paper.url || '#'}" target="_blank" class="text-blue-600 hover:underline font-medium flex items-center gap-1">
@@ -43,7 +43,7 @@
           <div class="text-center py-12">
             <i class="fas fa-file-alt text-5xl text-gray-300 mb-4"></i>
             <h3 class="text-xl font-medium text-gray-600">No papers found for the selected filters.</h3>
-            <p class="text-gray-500 mt-2">Try adjusting your filters.</p>
+            <p class="text-gray-800 mt-2">Try adjusting your filters.</p>
           </div>
         `;
       }
@@ -52,7 +52,7 @@
         <div class="text-center py-12">
           <i class="fas fa-file-alt text-5xl text-gray-300 mb-4"></i>
           <h3 class="text-xl font-medium text-gray-600">No papers found for the selected filters.</h3>
-          <p class="text-gray-500 mt-2">Try adjusting your filters.</p>
+          <p class="text-gray-800 mt-2">Try adjusting your filters.</p>
         </div>
       `;
     }

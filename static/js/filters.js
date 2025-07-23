@@ -157,7 +157,7 @@ class ExamPortalFilters {
       scrollTop: $('#papers-container').offset().top - 140
     }, 500);
 
-    // Collect year filters - simple approach
+    // Collect year filters
     const yearValues = [];
     $('input[name="year"]:checked').each(function() {
       const val = $(this).val();
@@ -166,7 +166,7 @@ class ExamPortalFilters {
       }
     });
     
-    // Collect subject filters - simple approach
+    // Collect subject filters
     const subjectValues = [];
     $('input[name="subject"]:checked').each(function() {
       const val = $(this).val();

@@ -87,13 +87,52 @@
   </div>
 </section>
 
+<!-- Announcement Box -->
+<div class="container mx-auto px-4 py-8">
+  <div class="mt-12 bg-gradient-to-br from-yellow-100 to-white text-sky-950 border-l-4 border-yellow-500 rounded-md p-4 shadow-md hover:shadow-lg transition">
+    <h3 class="text-lg font-bold mb-1 flex items-center gap-2">
+      📘 What to Study Guide <span class="text-lg bg-yellow-400 text-sky-900 px-2 py-0.5 rounded-full animate-pulse">Coming Soon</span>
+    </h3>
+    <p class="text-sm text-gray-700 font-mono mb-3">
+      We're building a smart feature that analyzes past papers and highlights high-weightage topics for better focused preparation.
+    </p>
+    <a href="{% url 'paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
+      🔍 Browse Past Papers
+    </a>
+  </div>
+</div>
+
 <div class="container mx-auto px-4 py-8">
 
   <div class="flex flex-col lg:flex-row gap-8">
     <!-- Filter Panel -->
     <div class="lg:w-1/3 w-full mb-8 transition-transform duration-300 hover:scale-105 hover:shadow-2xl lg:mb-0">
       <div class="bg-gradient-to-r from-sky-950 to-cyan-900 rounded-xl shadow-lg p-6 border sticky top-24" id="aset_section">
-        {% include 'includes/filter_panel.html' %}
+        
+        <!-- Glimpse / Preview Section -->
+        <div class="bg-white text-sky-950 rounded-lg p-4 shadow-md">
+          <h3 class="text-lg font-semibold mb-2">📚 Filter Preview</h3>
+          <p class="text-sm mb-4">
+            Browse and filter all the previous year papers exactly how you want using our smart filter. Here's a sneak peek:
+          </p>
+
+          <!-- Static Preview Image or Dummy UI -->
+          <div class="relative group mb-4 rounded-xl overflow-hidden border border-gray-300 shadow transition duration-300 hover:shadow-xl cursor-pointer">
+            <img src="{% static 'images/filter-preview.png' %}" alt="Filter Preview" class="w-full h-auto transition duration-300 group-hover:blur-sm group-hover:brightness-90">
+            
+            <!-- Overlay text on hover -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black bg-opacity-40">
+              <span class="text-white text-sm font-semibold bg-sky-700 bg-opacity-80 px-4 py-2 rounded shadow-lg">
+                👀 This is a Preview of Filter Panel.
+              </span>
+            </div>
+
+          </div>
+
+          <a href="{% url 'paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
+            🔍 Try Papers' Filter
+          </a>
+        </div>
       </div>
     </div>
 
@@ -126,7 +165,7 @@
 
 <!-- Semester Popup -->
 <div id="semester-popup" style="display: none;" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-  <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+  <div class="bg-gradient-to-r from-slate-400 to-pink-100 rounded-lg shadow-lg p-6 w-96">
     <h3 id="popup-title" class="text-lg font-bold mb-4">Select Semester</h3>
     <div id="semester-list" class="flex flex-wrap gap-2">
       <!-- Semesters will be dynamically loaded here -->
@@ -135,14 +174,10 @@
     <!-- Year and Subject Filters -->
     <div id="filter-container" class="mt-4 hidden">
       <label class="block font-medium mb-2 text-gray-700">Year</label>
-      <select id="year-filter" class="select w-full">
-        <option value="">All Years</option>
-      </select>
+      <div id="year-filter" class="flex flex-wrap mb-2"></div>
 
       <label class="block font-medium mt-4 mb-2 text-gray-700">Subject</label>
-      <select id="subject-filter" class="select w-full">
-        <option value="">All Subjects</option>
-      </select>
+      <div id="subject-filter" class="flex flex-wrap mb-2"></div>
     </div>
 
     <button onclick="closeSemesterPopup()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Close</button>
@@ -204,11 +239,11 @@ function openSemesterPopup(programId, programName) {
   const semesterList = document.getElementById('semester-list');
   semesterList.innerHTML = '<div>Loading...</div>';
 
-  fetch(`/api/semesters/?program=${programId}`) // Corrected query parameter
+  fetch(`/api/semesters/?program=${programId}`)
     .then(response => response.json())
     .then(data => {
       semesterList.innerHTML = data.map(semester => `
-        <button class="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-300 active:bg-blue-400 transition" 
+        <button class="bg-gray-300 text-sky-950 px-3 py-1 rounded-full text-sm hover:bg-yellow-400 active:bg-yellow-500 transition" 
                 onclick="selectSemester(${semester.id}, '${semester.number}')">
           Semester ${semester.number}
         </button>
@@ -237,10 +272,20 @@ function selectSemester(semesterId, semesterName) {
   submitButton.classList.remove('hidden');
   submitButton.onclick = submitFilters;
 
+  // highlight selected Semester
+  const semesterButtons = document.querySelectorAll('#semester-list button');
+  semesterButtons.forEach(btn => {
+    if (btn.textContent.includes(semesterName)) {
+      btn.classList.add('bg-yellow-400', 'text-green-900', 'font-semibold');
+    } else {
+      btn.classList.remove('bg-yellow-400', 'text-green-900', 'font-semibold');
+    }
+  });
+
   // Load years and subjects using existing methods
   $('#semester-filter').val(semesterId).trigger('change');
 
-  // Populate year and subject dropdowns dynamically
+  // Populate year and subject checkboxes dynamically
   fetch(`/api/subjects/?semester=${semesterId}`)
     .then(response => response.json())
     .then(data => {
@@ -248,30 +293,40 @@ function selectSemester(semesterId, semesterName) {
       const subjectFilter = document.getElementById('subject-filter');
 
       // Clear existing options
-      yearFilter.innerHTML = '<option value="">All Years</option>';
-      subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+      yearFilter.innerHTML = '';
+      subjectFilter.innerHTML = '';
 
-      // Populate years and subjects
+      // Populate years as checkboxes
       const years = [...new Set(data.map(subject => subject.year))];
-      years.forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearFilter.appendChild(option);
-      });
+      if (years.length > 0) {
+        years.forEach(year => {
+          const label = document.createElement('label');
+          label.className = 'inline-flex items-center mr-3 mb-2';
+          label.innerHTML = `<input type="checkbox" name="year" value="${year}" class="year-checkbox mr-2"> ${year}`;
+          yearFilter.appendChild(label);
+        });
+      } else {
+        yearFilter.innerHTML = '<span class="text-gray-500">No years available</span>';
+      }
 
-      data.forEach(subject => {
-        const option = document.createElement('option');
-        option.value = subject.id;
-        option.textContent = subject.name;
-        subjectFilter.appendChild(option);
-      });
+      // Populate subjects as checkboxes
+      if (data.length > 0) {
+        data.forEach(subject => {
+          const label = document.createElement('label');
+          label.className = 'inline-flex items-center mr-3 mb-2';
+          label.innerHTML = `<input type="checkbox" name="subject" value="${subject.id}" class="subject-checkbox mr-2"> ${subject.name}`;
+          subjectFilter.appendChild(label);
+        });
+      } else {
+        subjectFilter.innerHTML = '<span class="text-gray-500">No subjects available</span>';
+      }
     });
 }
 
 function submitFilters() {
-  const selectedYears = Array.from(document.getElementById('year-filter').selectedOptions).map(option => option.value);
-  const selectedSubjects = Array.from(document.getElementById('subject-filter').selectedOptions).map(option => option.value);
+  // Get checked years and subjects
+  const selectedYears = Array.from(document.querySelectorAll('#year-filter .year-checkbox:checked')).map(cb => cb.value);
+  const selectedSubjects = Array.from(document.querySelectorAll('#subject-filter .subject-checkbox:checked')).map(cb => cb.value);
   const selectedSemester = popupSelectedSemester;
   const selectedProgram = popupSelectedProgram;
 

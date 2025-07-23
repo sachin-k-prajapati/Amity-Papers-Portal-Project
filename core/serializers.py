@@ -1,24 +1,33 @@
-from rest_framework import serializers
 from .models import ExamPaper
 
-class PaperSerializer(serializers.ModelSerializer):
-    institute = serializers.CharField(source='subject_offering.semester.program.institute.name')
-    program = serializers.CharField(source='subject_offering.semester.program.name')
-    semester = serializers.CharField(source='subject_offering.semester.number')
-    subject = serializers.CharField(source='subject_offering.subject.name')
-    subject_code = serializers.CharField(source='subject_offering.subject.code')
-    paper_type = serializers.CharField(source='get_paper_type_display')
-    url = serializers.SerializerMethodField()
+def serialize_paper(paper):
+    """Convert ExamPaper instance to dictionary for JSON serialization"""
+    return {
+        'id': paper.id,
+        'year': paper.year,
+        'paper_type': paper.get_paper_type_display(),
+        'institute': paper.subject_offering.semester.program.institute.name,
+        'program': paper.subject_offering.semester.program.name,
+        'semester': paper.subject_offering.semester.number,
+        'subject': paper.subject_offering.subject.name,
+        'subject_code': paper.subject_offering.subject.code,
+        'url': paper.file.url if paper.file else None
+    }
 
-    class Meta:
-        model = ExamPaper
-        fields = [
-            'id', 'year', 'paper_type', 
-            'institute', 'program', 'semester', 
-            'subject', 'subject_code', 'url'
-        ]
+def serialize_papers(papers):
+    """Convert queryset or list of ExamPaper instances to list of dictionaries"""
+    return [serialize_paper(paper) for paper in papers]
 
-    def get_url(self, obj):
-        if obj.file:
-            return obj.file.url
-        return None
+# Legacy class for backward compatibility
+class PaperSerializer:
+    """Legacy compatibility class - replaced with function-based serialization"""
+    def __init__(self, papers, many=False):
+        self.papers = papers
+        self.many = many
+    
+    @property
+    def data(self):
+        if self.many:
+            return serialize_papers(self.papers)
+        else:
+            return serialize_paper(self.papers)

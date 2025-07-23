@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
 from django.http import JsonResponse, FileResponse
 from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper
-from .serializers import PaperSerializer
+from .serializers import serialize_papers
 import re
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -43,7 +43,7 @@ class HomeView(ListView):
 class PaperListView(ListView):
     model = ExamPaper
     template_name = 'core/papers.html'
-    paginate_by = 3
+    paginate_by = 20
     context_object_name = 'papers'
 
     def get_queryset(self):
@@ -207,7 +207,7 @@ class FilterPapersView(View):
         else:  # Default to recent
             queryset = queryset.order_by('-year', '-uploaded_at')
 
-        papers = PaperSerializer(queryset, many=True).data
+        papers = serialize_papers(queryset)
         return JsonResponse({'papers': papers})
 
 def api_programs(request):
@@ -280,8 +280,8 @@ def api_search(request):
     # Debugging: Log the number of results
     print(f"Number of results found: {papers.count()}")
     
-    serializer = PaperSerializer(papers, many=True)
-    return JsonResponse(serializer.data, safe=False)
+    papers_data = serialize_papers(papers)
+    return JsonResponse(papers_data, safe=False)
 
 @csrf_exempt
 def api_generateReport(request):
@@ -344,8 +344,8 @@ def api_generateReport(request):
     initial_count = queryset.count()
     print(f"Initial paper count: {initial_count}")
 
-    papers = PaperSerializer(queryset, many=True)
-    return JsonResponse({'success': True, 'papers': papers.data})
+    papers_data = serialize_papers(queryset)
+    return JsonResponse({'success': True, 'papers': papers_data})
 
 @csrf_exempt
 def api_report(request):
