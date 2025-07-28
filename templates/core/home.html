@@ -96,7 +96,7 @@
     <p class="text-sm text-gray-700 font-mono mb-3">
       We're building a smart feature that analyzes past papers and highlights high-weightage topics for better focused preparation.
     </p>
-    <a href="{% url 'paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
+    <a href="{% url 'core:paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
       🔍 Browse Past Papers
     </a>
   </div>
@@ -129,7 +129,7 @@
 
           </div>
 
-          <a href="{% url 'paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
+          <a href="{% url 'core:paper_list' %}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-sky-950 font-medium px-4 py-2 rounded transition">
             🔍 Try Papers' Filter
           </a>
         </div>
@@ -149,7 +149,7 @@
             <p class="text-sm text-gray-800 mb-1">{{ paper.subject_offering.semester.program.name }}</p>
           </div>
           <div class="mt-4 flex justify-between items-center">
-            <a href="{% url 'preview_paper' paper.id %}" target="_blank" class="text-blue-950 hover:underline font-medium flex items-center gap-1">
+            <a href="{% url 'core:preview_paper' paper.id %}" target="_blank" class="text-blue-950 hover:underline font-medium flex items-center gap-1">
               <i class="fas fa-eye"></i> View
             </a>
             <a href="{{ paper.file.url }}" download class="text-green-900 hover:underline font-medium flex items-center gap-1">
@@ -296,29 +296,72 @@ function selectSemester(semesterId, semesterName) {
       yearFilter.innerHTML = '';
       subjectFilter.innerHTML = '';
 
-      // Populate years as checkboxes
-      const years = [...new Set(data.map(subject => subject.year))];
-      if (years.length > 0) {
-        years.forEach(year => {
-          const label = document.createElement('label');
-          label.className = 'inline-flex items-center mr-3 mb-2';
-          label.innerHTML = `<input type="checkbox" name="year" value="${year}" class="year-checkbox mr-2"> ${year}`;
-          yearFilter.appendChild(label);
-        });
-      } else {
-        yearFilter.innerHTML = '<span class="text-gray-500">No years available</span>';
-      }
+      // Check if we have the new structured response
+      if (data.years && data.subjects) {
+        // New structured format
+        
+        // Populate years as checkboxes (already sorted in descending order)
+        if (data.years.length > 0) {
+          data.years.forEach(year => {
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center mr-3 mb-2';
+            label.innerHTML = `<input type="checkbox" name="year" value="${year}" class="year-checkbox mr-2"> ${year}`;
+            yearFilter.appendChild(label);
+          });
+        } else {
+          yearFilter.innerHTML = '<span class="text-gray-500">No years available</span>';
+        }
 
-      // Populate subjects as checkboxes
-      if (data.length > 0) {
-        data.forEach(subject => {
-          const label = document.createElement('label');
-          label.className = 'inline-flex items-center mr-3 mb-2';
-          label.innerHTML = `<input type="checkbox" name="subject" value="${subject.id}" class="subject-checkbox mr-2"> ${subject.name}`;
-          subjectFilter.appendChild(label);
-        });
+        // Populate subjects as checkboxes (distinct by code, ordered by code)
+        if (data.subjects.length > 0) {
+          data.subjects.forEach(subject => {
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center mr-3 mb-2';
+            label.innerHTML = `<input type="checkbox" name="subject" value="${subject.id}" class="subject-checkbox mr-2"> ${subject.code} - ${subject.name}`;
+            subjectFilter.appendChild(label);
+          });
+        } else {
+          subjectFilter.innerHTML = '<span class="text-gray-500">No subjects available</span>';
+        }
       } else {
-        subjectFilter.innerHTML = '<span class="text-gray-500">No subjects available</span>';
+        // Fallback for old format (if any)
+        const years = [...new Set(data.map(subject => subject.year))].sort((a, b) => b - a);
+        
+        if (years.length > 0) {
+          years.forEach(year => {
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center mr-3 mb-2';
+            label.innerHTML = `<input type="checkbox" name="year" value="${year}" class="year-checkbox mr-2"> ${year}`;
+            yearFilter.appendChild(label);
+          });
+        } else {
+          yearFilter.innerHTML = '<span class="text-gray-500">No years available</span>';
+        }
+
+        // For subjects, ensure uniqueness by code
+        const uniqueSubjects = [];
+        const seenCodes = new Set();
+        
+        data.forEach(subject => {
+          if (!seenCodes.has(subject.code)) {
+            seenCodes.add(subject.code);
+            uniqueSubjects.push(subject);
+          }
+        });
+        
+        // Sort by code
+        uniqueSubjects.sort((a, b) => a.code.localeCompare(b.code));
+        
+        if (uniqueSubjects.length > 0) {
+          uniqueSubjects.forEach(subject => {
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center mr-3 mb-2';
+            label.innerHTML = `<input type="checkbox" name="subject" value="${subject.id}" class="subject-checkbox mr-2"> ${subject.code} - ${subject.name}`;
+            subjectFilter.appendChild(label);
+          });
+        } else {
+          subjectFilter.innerHTML = '<span class="text-gray-500">No subjects available</span>';
+        }
       }
     });
 }
@@ -355,7 +398,7 @@ function submitFilters() {
         // Store papers data in sessionStorage
         sessionStorage.removeItem('papers'); // Clear previous data
         sessionStorage.setItem('papers', JSON.stringify(data.papers));
-        window.location.href = '/report.html/'; // Redirect to report page
+        window.location.href = '/report/'; // Redirect to report page
       } else {
         alert('Failed to generate report. Please try again.');
       }

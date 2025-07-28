@@ -115,31 +115,80 @@ class ExamPortalFilters {
 
     if (semesterId) {
       $.get(`/api/subjects/?semester=${semesterId}`, data => {
-        // Render subjects as before
-        data.forEach(subject => {
-          const subjectCheckboxes = `
-            <label class="subject-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
-              <input type="checkbox" name="subject" value="${subject.id}" class="mr-2 rounded text-blue-500">
-              <span>${subject.code} - ${subject.name}</span>
-            </label>
-          `;
-          $subjectContainer.append(subjectCheckboxes);
-        });
+        // Check if we have the new structured response
+        if (data.years && data.subjects) {
+          // New structured format with distinct subjects and ordered years
+          
+          // Render distinct subjects ordered by code
+          data.subjects.forEach(subject => {
+            const subjectCheckboxes = `
+              <label class="subject-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
+                <input type="checkbox" name="subject" value="${subject.id}" class="mr-2 rounded text-blue-500">
+                <span>${subject.code} - ${subject.name}</span>
+              </label>
+            `;
+            $subjectContainer.append(subjectCheckboxes);
+          });
 
-        // Get distinct years and display in grid
-        const years = [...new Set(data.map(subject => subject.year))];
-        let yearGrid = '<div class="grid grid-cols-2 md:grid-cols-3 gap-2">';
-        years.forEach(year => {
-          yearGrid += `
-            <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">
-              <input type="checkbox" name="year" value="${year}" class="mr-2 rounded text-blue-500">
-              <span>${year}</span>
-            </label>
-          `;
-        });
-        yearGrid += '</div>';
-        $yearContainer.html(yearGrid);
+          // Display years in descending order (already sorted from backend)
+          let yearGrid = '<div class="grid grid-cols-2 md:grid-cols-3 gap-2">';
+          data.years.forEach(year => {
+            yearGrid += `
+              <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">
+                <input type="checkbox" name="year" value="${year}" class="mr-2 rounded text-blue-500">
+                <span>${year}</span>
+              </label>
+            `;
+          });
+          yearGrid += '</div>';
+          $yearContainer.html(yearGrid);
+        } else {
+          // Fallback for old format (if any) - ensure distinct subjects by code
+          const uniqueSubjects = [];
+          const seenCodes = new Set();
+          
+          data.forEach(subject => {
+            if (!seenCodes.has(subject.code)) {
+              seenCodes.add(subject.code);
+              uniqueSubjects.push(subject);
+            }
+          });
+          
+          // Sort subjects by code
+          uniqueSubjects.sort((a, b) => a.code.localeCompare(b.code));
+          
+          // Render distinct subjects
+          uniqueSubjects.forEach(subject => {
+            const subjectCheckboxes = `
+              <label class="subject-option flex items-center py-1 px-2 hover:bg-gray-100 rounded">
+                <input type="checkbox" name="subject" value="${subject.id}" class="mr-2 rounded text-blue-500">
+                <span>${subject.code} - ${subject.name}</span>
+              </label>
+            `;
+            $subjectContainer.append(subjectCheckboxes);
+          });
+
+          // Get distinct years and sort in descending order
+          const years = [...new Set(data.map(subject => subject.year))].sort((a, b) => b - a);
+          let yearGrid = '<div class="grid grid-cols-2 md:grid-cols-3 gap-2">';
+          years.forEach(year => {
+            yearGrid += `
+              <label class="year-option flex items-center py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">
+                <input type="checkbox" name="year" value="${year}" class="mr-2 rounded text-blue-500">
+                <span>${year}</span>
+              </label>
+            `;
+          });
+          yearGrid += '</div>';
+          $yearContainer.html(yearGrid);
+        }
+      }).fail(() => {
+        $subjectContainer.html('<div class="text-center py-4 text-red-500 text-sm">Failed to load subjects</div>');
+        $yearContainer.html('<div class="text-center py-4 text-red-500 text-sm">Failed to load years</div>');
       });
+    } else {
+      $subjectContainer.html('<div class="text-center py-4 text-gray-500 text-sm">Select semester to see subjects</div>');
+      $yearContainer.html('<div class="text-center py-4 text-gray-500 text-sm">Select semester to see years</div>');
     }
   }
 
@@ -184,22 +233,12 @@ class ExamPortalFilters {
       sort: $('#sort-dropdown').val() || 'recent',
     };
 
-    // Debug: Log the filters being sent
-    console.log('=== FRONTEND DEBUG ===');
-    console.log('Applying filters:', filters);
-    console.log('Years selected:', yearValues);
-    console.log('Subjects selected:', subjectValues);
-    console.log('=====================');
-
     $.ajax({
       url: '/api/filter-papers/',
       method: 'GET',
       data: filters,
       traditional: true, // This ensures arrays are sent properly
       success: (response) => {
-        console.log('Server response:', response);
-        console.log('Number of papers returned:', response.papers.length);
-        
         const papersContainer = $('#papers-container');
         papersContainer.empty();
 

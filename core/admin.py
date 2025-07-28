@@ -1,138 +1,191 @@
 import os
-import zipfile
-import shutil
-import tempfile
 import csv
-
 from django.contrib import admin, messages
-from django.utils.html import format_html
-from django.db.models import Count
 from django.core.files import File
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.urls import path
+from django.template.response import TemplateResponse
 
 from .models import Institute, Program, Semester, Subject, ExamPaper, SubjectOffering
 
-# Utility: handle ZIP upload
-def handle_bulk_upload(zip_file, uploader, subject_offering=None):
-    extraction_path = tempfile.mkdtemp(prefix='papers_upload_')
-    try:
-        with zipfile.ZipFile(zip_file) as z:
-            z.extractall(extraction_path)
-
-        uploaded_count = 0
-        for root, _, files in os.walk(extraction_path):
-            for filename in files:
-                if filename.lower().endswith('.pdf'):
-                    filepath = os.path.join(root, filename)
-                    with open(filepath, 'rb') as f:
-                        paper = ExamPaper(
-                            subject_offering=subject_offering,
-                            file=File(f, name=filename),
-                            year=2023,  # Default/fallback, or parse from filename
-                            paper_type='E',  # Default/fallback
-                        )
-                        paper.save()
-                        uploaded_count += 1
-        return uploaded_count
-    finally:
-        shutil.rmtree(extraction_path, ignore_errors=True)
-
 # =================== ADMIN CONFIGS ===================== #
-
-class ProgramInline(admin.TabularInline):
-    model = Program
-    extra = 1
 
 @admin.register(Institute)
 class InstituteAdmin(admin.ModelAdmin):
-    list_display = ('name', 'icon', 'paper_count')
-    search_fields = ('name',)
-    inlines = [ProgramInline]
-
-    def paper_count(self, obj):
-        return ExamPaper.objects.filter(
-            subject_offering__semester__program__institute=obj
-        ).count()
-    paper_count.short_description = 'Total Papers'
-
-
-class SemesterInline(admin.TabularInline):
-    model = Semester
-    extra = 1
+    list_display = ('name', 'abbreviation', 'is_active', 'is_featured')
+    search_fields = ('name', 'abbreviation')
+    list_filter = ('is_active', 'is_featured')
+    prepopulated_fields = {'slug': ('name',)}
 
 @admin.register(Program)
 class ProgramAdmin(admin.ModelAdmin):
     list_display = ('name', 'institute')
     list_filter = ('institute',)
-    search_fields = ('name',)
-    inlines = [SemesterInline]
-
-
-class SubjectOfferingInline(admin.TabularInline):
-    model = SubjectOffering
-    extra = 1
+    search_fields = ('name', 'institute__name')
 
 @admin.register(Semester)
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ('number', 'program')
-    list_filter = ('program__institute', 'program')
-    inlines = [SubjectOfferingInline]
-
+    list_display = ('number', 'program', 'get_institute')
+    list_filter = ('program__institute', 'number')
+    search_fields = ('program__name', 'program__institute__name')
+    
+    def get_institute(self, obj):
+        return obj.program.institute.name
+    get_institute.short_description = 'Institute'
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code')
+    list_display = ('code', 'name')
     search_fields = ('name', 'code')
+    list_filter = ('code',)
 
+@admin.register(SubjectOffering)
+class SubjectOfferingAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'semester', 'get_program', 'get_institute')
+    list_filter = ('semester__program__institute', 'semester__program', 'semester__number')
+    search_fields = ('subject__name', 'subject__code', 'semester__program__name')
+    
+    def get_program(self, obj):
+        return obj.semester.program.name
+    get_program.short_description = 'Program'
+    
+    def get_institute(self, obj):
+        return obj.semester.program.institute.name
+    get_institute.short_description = 'Institute'
 
 @admin.register(ExamPaper)
 class ExamPaperAdmin(admin.ModelAdmin):
-    list_display = ['subject_offering', 'paper_type', 'year', 'uploaded_at']
-    readonly_fields = ['uploaded_at']
-    list_filter = ['paper_type', 'year']
-
-    actions = ['export_as_csv', 'bulk_upload_papers']
-
-    def bulk_upload_papers(self, request, queryset):
-        """Bulk upload form for ZIPs"""
-        if request.method == 'POST' and 'zip_file' in request.FILES:
-            zip_file = request.FILES['zip_file']
-            offering_id = request.POST.get('subject_offering')
-
+    list_display = ['title', 'subject_code', 'institute_name', 'program_name', 'year', 'paper_type']
+    list_filter = ['paper_type', 'year', 'institute_name', 'program_name']
+    search_fields = ['title', 'subject_code', 'subject_name', 'institute_name']
+    readonly_fields = ['uploaded_at', 'file_size', 'institute_name', 'program_name', 'semester_number', 'subject_code', 'subject_name']
+    list_per_page = 50
+    
+    actions = ['export_csv', 'delete_broken_files']
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('bulk-upload/', self.admin_site.admin_view(self.bulk_upload_view), name='core_exampaper_bulk_upload'),
+        ]
+        return custom_urls + urls
+    
+    def bulk_upload_view(self, request):
+        """Simple bulk upload with automatic file name processing"""
+        if request.method == 'POST':
+            subject_offering_id = request.POST.get('subject_offering')
+            files = request.FILES.getlist('files')
+            
+            if not subject_offering_id:
+                messages.error(request, 'Please select a subject offering.')
+                return redirect(request.path)
+                
+            if not files:
+                messages.error(request, 'Please select at least one file.')
+                return redirect(request.path)
+            
             try:
-                subject_offering = SubjectOffering.objects.get(id=offering_id)
-                uploaded_count = handle_bulk_upload(zip_file, request.user, subject_offering)
-                self.message_user(request, f'Successfully uploaded {uploaded_count} papers.', level=messages.SUCCESS)
+                subject_offering = SubjectOffering.objects.get(id=subject_offering_id)
+                success_count = 0
+                error_count = 0
+                
+                for file in files:
+                    try:
+                        # Extract information from filename
+                        filename = file.name.lower()
+                        base_name = os.path.splitext(filename)[0]
+                        
+                        # Extract year (look for 4-digit number)
+                        import re
+                        year_match = re.search(r'\b(20\d{2})\b', base_name)
+                        year = int(year_match.group(1)) if year_match else 2024
+                        
+                        # Extract paper type from filename
+                        paper_type = 'E'  # default End Sem
+                        if any(word in base_name for word in ['back', 'backpaper', 'bp', 'compartment', 'reappear']):
+                            paper_type = 'B'
+                        
+                        # Create standardized filename
+                        subject_code = subject_offering.subject.code
+                        subject_name = subject_offering.subject.name.replace(' ', '_')
+                        program_name = subject_offering.semester.program.name.replace(' ', '_')
+                        paper_type_name = 'End_Sem' if paper_type == 'E' else 'Back_Paper'
+                        
+                        # Format: SUBJECTCODE_SUBJECTNAME_YEAR_PAPERTYPE_PROGRAM.pdf
+                        new_filename = f"{subject_code}_{subject_name}_{year}_{paper_type_name}_{program_name}.pdf"
+                        
+                        # Create title for display
+                        paper_type_display = 'End Sem' if paper_type == 'E' else 'Back Paper'
+                        title = f"{subject_code} - {subject_offering.subject.name} ({year} {paper_type_display})"
+                        
+                        # Save file with new name
+                        file.name = new_filename
+                        
+                        paper = ExamPaper.objects.create(
+                            title=title,
+                            subject_offering=subject_offering,
+                            year=year,
+                            paper_type=paper_type,
+                            file=file
+                        )
+                        success_count += 1
+                        
+                    except Exception as e:
+                        error_count += 1
+                        messages.error(request, f'Error processing {file.name}: {str(e)}')
+                
+                if success_count > 0:
+                    messages.success(request, f"Successfully uploaded {success_count} papers with auto-detection.")
+                
+                if error_count > 0:
+                    messages.warning(request, f"{error_count} files failed to upload.")
+                
                 return redirect('admin:core_exampaper_changelist')
+                
+            except SubjectOffering.DoesNotExist:
+                messages.error(request, 'Invalid subject offering selected.')
             except Exception as e:
-                messages.error(request, f'Upload error: {str(e)}')
-
-        offerings = SubjectOffering.objects.select_related('subject', 'semester__program__institute')
+                messages.error(request, f'Upload failed: {str(e)}')
+        
+        # Get context for form
         context = {
-            'title': 'Bulk Upload Papers',
-            'offerings': offerings,
+            'title': 'Bulk Paper Upload',
+            'subject_offerings': SubjectOffering.objects.select_related(
+                'subject', 'semester__program__institute'
+            ).all().order_by('semester__program__institute__name', 'semester__program__name', 'semester__number', 'subject__code'),
             'opts': self.model._meta,
         }
-        return render(request, 'admin/bulk_upload.html', context)
-
-    bulk_upload_papers.short_description = "Bulk Upload Papers from ZIP"
-
-    def export_as_csv(self, request, queryset):
-        """Export ExamPaper data to CSV"""
+        
+        return TemplateResponse(request, 'admin/bulk_upload.html', context)
+    
+    def delete_broken_files(self, request, queryset):
+        """Remove papers with broken file links"""
+        import os
+        broken_count = 0
+        for paper in queryset:
+            if paper.file and not os.path.exists(paper.file.path):
+                paper.delete()
+                broken_count += 1
+        
+        self.message_user(request, f'{broken_count} papers with broken files deleted.')
+    delete_broken_files.short_description = "Delete papers with broken file links"
+    
+    def export_csv(self, request, queryset):
+        """Simple CSV export"""
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="exam_papers.csv"'
+        response['Content-Disposition'] = 'attachment; filename="papers.csv"'
         writer = csv.writer(response)
-        writer.writerow(['Subject', 'Program', 'Semester', 'Year', 'Type', 'Uploaded At'])
+        writer.writerow(['Title', 'Subject Code', 'Institute', 'Year', 'Paper Type'])
+        
         for paper in queryset:
             writer.writerow([
-                paper.subject_offering.subject.name,
-                paper.subject_offering.semester.program.name,
-                f"Sem {paper.subject_offering.semester.number}",
+                paper.title,
+                paper.subject_code,
+                paper.institute_name,
                 paper.year,
-                paper.get_paper_type_display(),
-                paper.uploaded_at.strftime('%Y-%m-%d'),
+                paper.get_paper_type_display()
             ])
         return response
-
-    export_as_csv.short_description = "Export selected papers as CSV"
+    
+    export_csv.short_description = "Export selected papers as CSV"

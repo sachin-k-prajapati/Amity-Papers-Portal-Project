@@ -1,134 +1,104 @@
 {% extends "admin/base_site.html" %}
-{% load static %}
+{% load i18n admin_urls static %}
 
-{% block title %}{{ title }} | {{ site_title|default:"Django site admin" }}{% endblock %}
+{% block title %}Bulk Upload | {{ site_title|default:_('Papers Portal Admin') }}{% endblock %}
 
 {% block extrahead %}
-<style>
-.bulk-upload-form {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.form-control {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.btn-upload {
-    background: #417690;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.btn-upload:hover {
-    background: #2e5266;
-}
-
-.help-text {
-    color: #666;
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-.upload-instructions {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
-.upload-instructions h4 {
-    margin-top: 0;
-    color: #333;
-}
-
-.upload-instructions ul {
-    margin: 10px 0;
-    padding-left: 20px;
-}
-</style>
+    {{ block.super }}
+    <style>
+        .form-row {
+            margin-bottom: 20px;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        .help-text {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        .submit-row {
+            padding: 15px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="bulk-upload-form">
-    <h1>{{ title }}</h1>
-    
-    <div class="upload-instructions">
-        <h4>Upload Instructions:</h4>
-        <ul>
-            <li>Upload a ZIP file containing PDF exam papers</li>
-            <li>Each PDF file will be created as a separate exam paper</li>
-            <li>File names will be used as paper titles (underscores replaced with spaces)</li>
-            <li>Optionally select a subject to assign to all papers</li>
-            <li>Only PDF files will be processed, other files will be ignored</li>
-        </ul>
-    </div>
-
-    <form method="post" enctype="multipart/form-data">
+<div id="content-main">
+    <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         
-        <div class="form-group">
-            <label for="zip_file">ZIP File:</label>
-            <input type="file" id="zip_file" name="zip_file" accept=".zip" class="form-control" required>
-            <div class="help-text">Select a ZIP file containing PDF exam papers</div>
+        <div>
+            <p class="help">Upload multiple files with automatic year and paper type detection from filenames.</p>
         </div>
 
-        <div class="form-group">
-            <label for="subject">Subject (Optional):</label>
-            <select id="subject" name="subject" class="form-control">
-                <option value="">-- Select Subject (Optional) --</option>
-                {% for subject in subjects %}
-                    <option value="{{ subject.id }}">
-                        {{ subject.semester.program.institute.name }} - 
-                        {{ subject.semester.program.name }} - 
-                        {{ subject.semester.name }} - 
-                        {{ subject.name }} ({{ subject.code }})
-                    </option>
-                {% endfor %}
-            </select>
-            <div class="help-text">If selected, all papers will be assigned to this subject</div>
+        <fieldset class="module aligned">
+            <div class="form-row">
+                <div>
+                    <label class="required" for="id_subject_offering">Subject offering:</label>
+                    <select name="subject_offering" id="id_subject_offering" required>
+                        <option value="">---------</option>
+                        {% for offering in subject_offerings %}
+                        <option value="{{ offering.id }}">
+                            {{ offering.semester.program.institute.abbreviation }} - 
+                            {{ offering.semester.program.name }} - 
+                            Sem {{ offering.semester.number }} - 
+                            {{ offering.subject.code }} ({{ offering.subject.name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label class="required" for="id_files">Files:</label>
+                    <div class="file-upload-area">
+                        <input type="file" name="files" id="id_files" multiple accept=".pdf,.doc,.docx" required>
+                        <p style="margin: 10px 0 0 0; color: #666;">
+                            Select multiple PDF files (hold Ctrl/Cmd to select multiple)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="help-text">
+            <h4>Automatic Detection:</h4>
+            <ul>
+                <li><strong>Year:</strong> Extracts 4-digit years (2020-2030) from filename</li>
+                <li><strong>Paper Type:</strong> Detects keywords in filename:
+                    <ul style="margin-top: 5px;">
+                        <li>"back", "backpaper", "bp", "compartment", "reappear" → Back Paper</li>
+                        <li>Default → End Sem</li>
+                    </ul>
+                </li>
+                <li><strong>File Naming:</strong> Saves as "SUBJECTCODE_SUBJECTNAME_YEAR_TYPE_PROGRAM.pdf"</li>
+            </ul>
         </div>
 
-        <div class="form-group">
-            <button type="submit" class="btn-upload">
-                <i class="fas fa-upload"></i> Upload Papers
-            </button>
-            <a href="{% url 'admin:core_exampaper_changelist' %}" class="btn-upload" style="background: #666; text-decoration: none; margin-left: 10px;">
-                Cancel
-            </a>
+        <div class="help-text">
+            <h4>Example:</h4>
+            <p style="font-family: monospace; margin: 5px 0;">
+                "Operating System Back Paper 2024.pdf" → CSE501_Operating_Systems_2024_Back_Paper_CSE.pdf
+            </p>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Upload Files" class="default" />
+            <a href="{% url 'admin:core_exampaper_changelist' %}" class="button">Cancel</a>
         </div>
     </form>
 </div>
-
-<script>
-document.getElementById('zip_file').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file && !file.name.toLowerCase().endsWith('.zip')) {
-        alert('Please select a ZIP file.');
-        e.target.value = '';
-    }
-});
-</script>
 {% endblock %}

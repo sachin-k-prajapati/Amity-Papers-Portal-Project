@@ -1,0 +1,54 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{{ block.super }}
+<!-- Custom styles for admin index page -->
+{% block extrahead %}
+<style>
+    .admin-shortcuts {
+        margin: 20px 0;
+        padding: 25px;
+        border-radius: 12px;
+        background-color: black;
+        font-weight: bold;
+    }
+    .admin-shortcuts h2 {
+        margin-top: 0;
+    }
+
+    .shortcut-button {
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-shortcuts">
+    <h2>Quick Actions Links</h2>
+    
+    <a href="{% url 'admin:core_exampaper_changelist' %}" class="shortcut-button">
+        Manage Papers
+    </a>
+    
+    <a href="{% url 'admin:core_exampaper_bulk_upload' %}" class="shortcut-button">
+       | Bulk Upload
+    </a>
+    
+    <a href="{% url 'admin:core_exampaper_add' %}" class="shortcut-button">
+        | Add Single Paper
+    </a>
+    
+    <a href="{% url 'admin:core_institute_changelist' %}" class="shortcut-button">
+        | Manage Institutes
+    </a>
+    
+    <a href="{% url 'admin:core_program_changelist' %}" class="shortcut-button">
+        | Manage Programs
+    </a>
+    <a href="{% url 'admin:core_semester_changelist' %}" class="shortcut-button">
+        | Manage Semesters
+    </a>
+</div>
+
+{{ block.super }}
+{% endblock %}
