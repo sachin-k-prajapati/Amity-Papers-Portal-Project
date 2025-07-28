@@ -1,16 +1,12 @@
 asgiref==3.9.1
+cloudinary==1.44.1
 Django==5.2.4
+django-cloudinary-storage==0.3.0
 pillow==11.3.0
+python-decouple==3.8
 sqlparse==0.5.3
 tzdata==2025.2
-
-# Production dependencies
-python-decouple==3.8
-dj-database-url==2.1.0
-whitenoise==6.6.0
+whitenoise==6.9.0
 psycopg2-binary==2.9.9
+dj-database-url==2.1.0
 gunicorn==21.2.0
-
-# sentry-sdk==1.40.0  # For error tracking
-# redis==5.0.1  # For caching
-# celery==5.3.4  # For background tasks
