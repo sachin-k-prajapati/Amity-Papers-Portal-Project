@@ -11,6 +11,16 @@ from .models import Institute, Program, Semester, Subject, ExamPaper, SubjectOff
 
 # =================== ADMIN CONFIGS ===================== #
 
+# Inline to allow managing SubjectOffering within Semester
+class SubjectOfferingInline(admin.TabularInline):
+    model = SubjectOffering
+    extra = 1
+
+# Inline to allow managing Semesters within Program
+class SemesterInline(admin.TabularInline):
+    model = Semester
+    extra = 1
+
 @admin.register(Institute)
 class InstituteAdmin(admin.ModelAdmin):
     list_display = ('name', 'abbreviation', 'is_active', 'is_featured')
@@ -23,13 +33,16 @@ class ProgramAdmin(admin.ModelAdmin):
     list_display = ('name', 'institute')
     list_filter = ('institute',)
     search_fields = ('name', 'institute__name')
+    inlines = [SemesterInline]
 
 @admin.register(Semester)
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ('number', 'program', 'get_institute')
     list_filter = ('program__institute', 'number')
     search_fields = ('program__name', 'program__institute__name')
-    
+    inlines = [SubjectOfferingInline]
+    autocomplete_fields = ["program"]
+
     def get_institute(self, obj):
         return obj.program.institute.name
     get_institute.short_description = 'Institute'
@@ -39,12 +52,13 @@ class SubjectAdmin(admin.ModelAdmin):
     list_display = ('code', 'name')
     search_fields = ('name', 'code')
     list_filter = ('code',)
-
+ 
 @admin.register(SubjectOffering)
 class SubjectOfferingAdmin(admin.ModelAdmin):
-    list_display = ('subject', 'semester', 'get_program', 'get_institute')
+    list_display = ('subject', 'semester')
     list_filter = ('semester__program__institute', 'semester__program', 'semester__number')
     search_fields = ('subject__name', 'subject__code', 'semester__program__name')
+    autocomplete_fields = ["subject", "semester"]
     
     def get_program(self, obj):
         return obj.semester.program.name

@@ -43,6 +43,10 @@ class Subject(models.Model):
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=20)
     semesters = models.ManyToManyField(Semester, through='SubjectOffering')
+    
+    class Meta:
+        unique_together = ('code', 'name')
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.code} - {self.name}"
