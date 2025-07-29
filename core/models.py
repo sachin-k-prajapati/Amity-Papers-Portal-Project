@@ -72,9 +72,8 @@ class ExamPaper(models.Model):
     file = models.FileField(upload_to='papers/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
-    # efficiency fields
+    # efficiency field
     title = models.CharField(max_length=300, blank=True, help_text="Auto-generated from filename if empty")
-    file_size = models.PositiveBigIntegerField(blank=True, null=True, help_text="File size in bytes")
     
     # Denormalized fields for faster queries (reduce joins)
     institute_name = models.CharField(max_length=200, blank=True, editable=False)
@@ -120,14 +119,7 @@ class ExamPaper(models.Model):
         if not self.title and self.subject_offering:
             paper_type_display = 'End Sem' if self.paper_type == 'E' else 'Back Paper'
             self.title = f"{self.subject_offering.subject.code} - {self.subject_offering.subject.name} ({self.year} {paper_type_display})"
-        
-        # Calculate file size
-        if self.file:
-            try:
-                self.file_size = self.file.size
-            except:
-                pass
-                
+             
         super().save(*args, **kwargs)
 
     def __str__(self):

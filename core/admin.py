@@ -73,7 +73,7 @@ class ExamPaperAdmin(admin.ModelAdmin):
     list_display = ['title', 'subject_code', 'institute_name', 'program_name', 'year', 'paper_type']
     list_filter = ['paper_type', 'year', 'institute_name', 'program_name']
     search_fields = ['title', 'subject_code', 'subject_name', 'institute_name']
-    readonly_fields = ['uploaded_at', 'file_size', 'institute_name', 'program_name', 'semester_number', 'subject_code', 'subject_name']
+    readonly_fields = ['uploaded_at', 'institute_name', 'program_name', 'semester_number', 'subject_code', 'subject_name']
     list_per_page = 50
     
     actions = ['export_csv', 'delete_broken_files']
