@@ -30,10 +30,10 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary',
-    'cloudinary_storage',  # Must be before staticfiles
     'django.contrib.staticfiles',
     'core', # application
+    'cloudinary',
+    'cloudinary_storage',  # Must be before staticfiles
 ]
 
 MIDDLEWARE = [
