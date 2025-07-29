@@ -6,8 +6,6 @@ from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
 import cloudinary
-import cloudinary.uploader
-import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,8 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core', # application
+    'cloudinary_storage',
     'cloudinary',
-    'cloudinary_storage',  # Must be before staticfiles
 ]
 
 MIDDLEWARE = [
@@ -103,27 +101,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
+MEDIA_URL = '/media/'
+
 if config('ENVIRONMENT') == 'production':
     # Cloudinary configuration
-    cloudinary.config(
-        cloud_name=config('CLOUDINARY_CLOUD_NAME'),
-        api_key=config('CLOUDINARY_API_KEY'),
-        api_secret=config('CLOUDINARY_API_SECRET'),
-        secure=True
-    )
-    
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.RawMediaCloudinaryStorage'
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': config('CLOUDINARY_API_KEY'),
         'API_SECRET': config('CLOUDINARY_API_SECRET')
     }
-    
-    # Set MEDIA_URL for Cloudinary
-    # MEDIA_URL = f"https://res.cloudinary.com/{config('CLOUDINARY_CLOUD_NAME')}/"
 else:
-    MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
