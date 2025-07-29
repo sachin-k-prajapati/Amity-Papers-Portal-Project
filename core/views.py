@@ -436,9 +436,19 @@ def preview_paper(request, paper_id):
     paper = get_object_or_404(ExamPaper, id=paper_id)
     
     try:
-        if not paper.file or not paper.file.path:
+        if not paper.file:
             raise Http404("File not found")
         
+        # For Cloudinary files, we can directly serve the URL
+        # Cloudinary URLs are publicly accessible and work great in iframes
+        file_url = paper.file.url
+        
+        # If it's a Cloudinary URL, redirect to it
+        if 'cloudinary.com' in file_url:
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(file_url)
+        
+        # For local files (fallback), serve via FileResponse
         file_path = paper.file.path
         
         # Security check - ensure file exists and is accessible
@@ -452,6 +462,65 @@ def preview_paper(request, paper_id):
             open(file_path, 'rb'), 
             content_type='application/pdf',
             as_attachment=False,
+            filename=f"{paper.subject_offering.subject.code}_{paper.year}.pdf"
+        )
+    except Exception as e:
+        raise Http404("File not available")
+
+@require_http_methods(["GET"])
+def download_paper(request, paper_id):
+    try:
+        # Validate paper_id is integer
+        paper_id = int(paper_id)
+    except (ValueError, TypeError):
+        raise Http404("Invalid paper ID")
+    
+    paper = get_object_or_404(ExamPaper, id=paper_id)
+    
+    try:
+        if not paper.file:
+            raise Http404("File not found")
+        
+        # For Cloudinary files, we need to serve them through Django to force download
+        file_url = paper.file.url
+        
+        if 'cloudinary.com' in file_url:
+            # For Cloudinary files, fetch and serve with download headers
+            import requests
+            from django.http import HttpResponse
+            
+            response = requests.get(file_url)
+            if response.status_code == 200:
+                # Generate filename 
+                subject_code = paper.subject_offering.subject.code
+                subject_name = paper.subject_offering.subject.name.replace(' ', '_')
+                paper_type = 'End_Sem' if paper.paper_type == 'E' else 'Back_Paper'
+                program_name = paper.subject_offering.semester.program.name.replace(' ', '_').replace('.', '')
+                filename = f"{subject_code}_{subject_name}_{paper.year}_{paper_type}_{program_name}.pdf"
+                
+                http_response = HttpResponse(
+                    response.content,
+                    content_type='application/pdf'
+                )
+                http_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return http_response
+            else:
+                raise Http404("File not available from storage")
+        
+        # For local files (fallback), serve via FileResponse
+        file_path = paper.file.path
+        
+        # Security check - ensure file exists and is accessible
+        import os
+        if not os.path.exists(file_path) or not os.path.isfile(file_path):
+            # Log the broken file but don't expose internal paths
+            print(f"Warning: Paper {paper_id} has broken file link: {paper.file.name}")
+            raise Http404("File not available - please contact administrator")
+        
+        return FileResponse(
+            open(file_path, 'rb'), 
+            content_type='application/pdf',
+            as_attachment=True,  # This forces download
             filename=f"{paper.subject_offering.subject.code}_{paper.year}.pdf"
         )
     except Exception as e:

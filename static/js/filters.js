@@ -278,10 +278,10 @@ class ExamPortalFilters {
                   </div>
                   
                   <div class="mt-auto flex justify-between items-center">
-                    <a href="${paper.url}" target="_blank" class="text-cyan-900 hover:text-pink-800 flex font-medium items-center transition-colors">
+                    <button class="preview-btn text-cyan-900 hover:text-pink-800 flex font-medium items-center transition-colors" data-pdf-url="${paper.preview_url}">
                       <i class="fas fa-eye mr-2"></i> Preview
-                    </a>
-                    <a href="${paper.url}" download class="hover:bg-yellow-400 text-green-900 py-2 px-4 font-medium rounded-lg hover:shadow-md transition-all">
+                    </button>
+                    <a href="${paper.download_url}" class="hover:bg-yellow-400 text-green-900 py-2 px-4 font-medium rounded-lg hover:shadow-md transition-all">
                       <i class="fas fa-download mr-2"></i> Download
                     </a>
                   </div>

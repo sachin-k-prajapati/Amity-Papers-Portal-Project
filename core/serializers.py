@@ -1,4 +1,5 @@
 from .models import ExamPaper
+from django.urls import reverse
 
 def serialize_paper(paper):
     """Convert ExamPaper instance to dictionary for JSON serialization"""
@@ -11,7 +12,9 @@ def serialize_paper(paper):
         'semester': paper.subject_offering.semester.number,
         'subject': paper.subject_offering.subject.name,
         'subject_code': paper.subject_offering.subject.code,
-        'url': paper.file.url if paper.file else None
+        'url': paper.file.url if paper.file else None,  # Direct file URL
+        'preview_url': reverse('core:preview_paper', args=[paper.id]),  # Django preview URL
+        'download_url': reverse('core:download_paper', args=[paper.id])  # Django download URL
     }
 
 def serialize_papers(papers):
