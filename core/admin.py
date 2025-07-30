@@ -122,16 +122,14 @@ class ExamPaperAdmin(admin.ModelAdmin):
                         
                         # Create standardized filename
                         subject_code = subject_offering.subject.code
-                        subject_name = subject_offering.subject.name.replace(' ', '_')
                         program_name = subject_offering.semester.program.name.replace(' ', '_')
                         paper_type_name = 'End_Sem' if paper_type == 'E' else 'Back_Paper'
-                        
-                        # Format: SUBJECTCODE_SUBJECTNAME_YEAR_PAPERTYPE_PROGRAM.pdf
-                        new_filename = f"{subject_code}_{subject_name}_{year}_{paper_type_name}_{program_name}.pdf"
+
+                        # Format: SUBJECTCODE_YEAR_PAPERTYPE_PROGRAM.pdf
+                        new_filename = f"{subject_code}_{year}_{paper_type_name}_{program_name}.pdf"
                         
                         # Create title for display
-                        paper_type_display = 'End Sem' if paper_type == 'E' else 'Back Paper'
-                        title = f"{subject_code} - {subject_offering.subject.name} ({year} {paper_type_display})"
+                        title = f"{subject_code} - {subject_offering.subject.name}"
                         
                         # Save file with new name
                         file.name = new_filename
