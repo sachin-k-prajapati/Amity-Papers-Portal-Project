@@ -70,7 +70,7 @@ class ExamPaper(models.Model):
     subject_offering = models.ForeignKey(SubjectOffering, on_delete=models.CASCADE, related_name='papers')
     paper_type = models.CharField(max_length=1, choices=PAPER_TYPES, default='E')
     year = models.PositiveIntegerField()
-    file = models.FileField(upload_to='papers/', storage=RawMediaCloudinaryStorage())
+    file = models.FileField(upload_to='papers/', storage=RawMediaCloudinaryStorage(), max_length=200)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     # efficiency field
@@ -108,18 +108,17 @@ class ExamPaper(models.Model):
             
             # Create standardized filename components
             subject_code = self.subject_offering.subject.code
-            subject_name = self.subject_offering.subject.name.replace(' ', '_')
             program_name = self.subject_offering.semester.program.name.replace(' ', '_')
             paper_type_name = 'End_Sem' if self.paper_type == 'E' else 'Back_Paper'
-            
-            # Format: SUBJECTCODE_SUBJECTNAME_YEAR_PAPERTYPE_PROGRAM.extension
-            new_filename = f"{subject_code}_{subject_name}_{self.year}_{paper_type_name}_{program_name}.{file_extension}"
+
+            # Format: SUBJECTCODE_YEAR_PAPERTYPE_PROGRAM.extension
+            new_filename = f"{subject_code}_{self.year}_{paper_type_name}_{program_name}.{file_extension}"
             self.file.name = new_filename
         
         # Auto-generate title if not provided
         if not self.title and self.subject_offering:
             paper_type_display = 'End Sem' if self.paper_type == 'E' else 'Back Paper'
-            self.title = f"{self.subject_offering.subject.code} - {self.subject_offering.subject.name} ({self.year} {paper_type_display})"
+            self.title = f"{self.subject_offering.subject.code} - {self.subject_offering.subject.name}"
              
         super().save(*args, **kwargs)
 
