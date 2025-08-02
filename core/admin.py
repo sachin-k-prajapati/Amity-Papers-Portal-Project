@@ -11,6 +11,16 @@ from .models import Institute, Program, Semester, Subject, ExamPaper, SubjectOff
 
 # =================== ADMIN CONFIGS ===================== #
 
+# Inline to allow managing SubjectOffering within Semester
+class SubjectOfferingInline(admin.TabularInline):
+    model = SubjectOffering
+    extra = 1
+
+# Inline to allow managing Semesters within Program
+class SemesterInline(admin.TabularInline):
+    model = Semester
+    extra = 1
+
 @admin.register(Institute)
 class InstituteAdmin(admin.ModelAdmin):
     list_display = ('name', 'abbreviation', 'is_active', 'is_featured')
@@ -23,13 +33,16 @@ class ProgramAdmin(admin.ModelAdmin):
     list_display = ('name', 'institute')
     list_filter = ('institute',)
     search_fields = ('name', 'institute__name')
+    inlines = [SemesterInline]
 
 @admin.register(Semester)
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ('number', 'program', 'get_institute')
     list_filter = ('program__institute', 'number')
     search_fields = ('program__name', 'program__institute__name')
-    
+    inlines = [SubjectOfferingInline]
+    autocomplete_fields = ["program"]
+
     def get_institute(self, obj):
         return obj.program.institute.name
     get_institute.short_description = 'Institute'
@@ -39,12 +52,13 @@ class SubjectAdmin(admin.ModelAdmin):
     list_display = ('code', 'name')
     search_fields = ('name', 'code')
     list_filter = ('code',)
-
+ 
 @admin.register(SubjectOffering)
 class SubjectOfferingAdmin(admin.ModelAdmin):
-    list_display = ('subject', 'semester', 'get_program', 'get_institute')
+    list_display = ('subject', 'semester')
     list_filter = ('semester__program__institute', 'semester__program', 'semester__number')
     search_fields = ('subject__name', 'subject__code', 'semester__program__name')
+    autocomplete_fields = ["subject", "semester"]
     
     def get_program(self, obj):
         return obj.semester.program.name
@@ -59,7 +73,7 @@ class ExamPaperAdmin(admin.ModelAdmin):
     list_display = ['title', 'subject_code', 'institute_name', 'program_name', 'year', 'paper_type']
     list_filter = ['paper_type', 'year', 'institute_name', 'program_name']
     search_fields = ['title', 'subject_code', 'subject_name', 'institute_name']
-    readonly_fields = ['uploaded_at', 'file_size', 'institute_name', 'program_name', 'semester_number', 'subject_code', 'subject_name']
+    readonly_fields = ['uploaded_at', 'institute_name', 'program_name', 'semester_number', 'subject_code', 'subject_name']
     list_per_page = 50
     
     actions = ['export_csv', 'delete_broken_files']
@@ -108,16 +122,14 @@ class ExamPaperAdmin(admin.ModelAdmin):
                         
                         # Create standardized filename
                         subject_code = subject_offering.subject.code
-                        subject_name = subject_offering.subject.name.replace(' ', '_')
                         program_name = subject_offering.semester.program.name.replace(' ', '_')
                         paper_type_name = 'End_Sem' if paper_type == 'E' else 'Back_Paper'
-                        
-                        # Format: SUBJECTCODE_SUBJECTNAME_YEAR_PAPERTYPE_PROGRAM.pdf
-                        new_filename = f"{subject_code}_{subject_name}_{year}_{paper_type_name}_{program_name}.pdf"
+
+                        # Format: SUBJECTCODE_YEAR_PAPERTYPE_PROGRAM.pdf
+                        new_filename = f"{subject_code}_{year}_{paper_type_name}_{program_name}.pdf"
                         
                         # Create title for display
-                        paper_type_display = 'End Sem' if paper_type == 'E' else 'Back Paper'
-                        title = f"{subject_code} - {subject_offering.subject.name} ({year} {paper_type_display})"
+                        title = f"{subject_code} - {subject_offering.subject.name}"
                         
                         # Save file with new name
                         file.name = new_filename

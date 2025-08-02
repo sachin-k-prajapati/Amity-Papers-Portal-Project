@@ -28,9 +28,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary',
-    'cloudinary_storage', 
     'core', # application
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -66,11 +66,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': dj_database_url.config(default=config("DATABASE_URL"))
 }
 
 # Password validation
@@ -104,17 +100,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 
-if config('ENVIRONMENT') == 'production':
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-        'API_KEY': config('CLOUDINARY_API_KEY'),
-        'API_SECRET': config('CLOUDINARY_API_SECRET')
-    }
-else:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Cloudinary configuration
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.RawMediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET')
+}
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

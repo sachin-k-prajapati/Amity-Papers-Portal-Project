@@ -149,10 +149,10 @@
             <p class="text-sm text-gray-800 mb-1">{{ paper.subject_offering.semester.program.name }}</p>
           </div>
           <div class="mt-4 flex justify-between items-center">
-            <a href="{% url 'core:preview_paper' paper.id %}" target="_blank" class="text-blue-950 hover:underline font-medium flex items-center gap-1">
+            <button class="preview-btn text-blue-950 hover:underline font-medium flex items-center gap-1" data-pdf-url="{% url 'core:preview_paper' paper.id %}">
               <i class="fas fa-eye"></i> View
-            </a>
-            <a href="{{ paper.file.url }}" download class="text-green-900 hover:underline font-medium flex items-center gap-1">
+            </button>
+            <a href="{% url 'core:download_paper' paper.id %}" class="text-green-900 hover:underline font-medium flex items-center gap-1">
               <i class="fas fa-download"></i> Download
             </a>
           </div>
@@ -189,6 +189,23 @@
 
 {% block extra_js %}
 <script>
+// Debounce function to limit API calls
+function debounce(func, delay) {
+  let timeoutId; // This will hold the ID of the setTimeout
+
+  return function(...args) { // The new, debounced function
+    const context = this; // Preserve the 'this' context
+
+    // Clear any existing timeout to reset the timer
+    clearTimeout(timeoutId);
+
+    // Set a new timeout
+    timeoutId = setTimeout(() => {
+      func.apply(context, args); // Execute the original function after the delay
+    }, delay);
+  };
+}
+
 // Homepage search functionality
 document.getElementById('smart-search').addEventListener('input', debounce(function() {
   const query = this.value.trim();
@@ -207,12 +224,20 @@ document.getElementById('smart-search').addEventListener('input', debounce(funct
     .then(data => {
       if (data.length > 0) {
         suggestions.innerHTML = data.map(item => `
-          <a href="${item.url}" class="block px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-0 transition-colors">
+          <div class="block px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-0 transition-colors">
+            <div class="flex gap-2">
+              <button class="preview-btn text-xs bg-yellow-300 mx-auto text-green-900 px-2 py-1 rounded hover:bg-yellow-400" data-pdf-url="${item.preview_url}">
+                <i class="fas fa-eye mr-1"></i> Preview
+              </button>
+              <a href="${item.download_url}" class="text-xs bg-sky-950 mx-auto text-sky-50 px-2 py-1 rounded hover:bg-lime-900">
+                <i class="fas fa-download mr-1"></i> Download
+              </a>
+            </div>
             <div class="font-medium text-blue-600">${item.subject_code} • ${item.subject} • ${item.year}</div>
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-gray-500 mb-2">
               ${item.program} • ${item.semester}-SEM • ${item.institute}
             </div>
-          </a>
+          </div>
         `).join('');
       } else {
         suggestions.innerHTML = '<div class="p-3 text-center text-gray-500">No results found</div>';
@@ -221,7 +246,7 @@ document.getElementById('smart-search').addEventListener('input', debounce(funct
     .catch(() => {
       suggestions.innerHTML = '<div class="p-3 text-center text-red-500">Error loading results</div>';
     });
-}, 300));
+}, 600));
 
 // Close suggestions when clicking outside
 document.addEventListener('click', function(e) {

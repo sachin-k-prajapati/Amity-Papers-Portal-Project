@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils.text import slugify
+from cloudinary_storage.storage import MediaCloudinaryStorage, RawMediaCloudinaryStorage
 
 class Institute(models.Model):
     name = models.CharField(max_length=200)
     abbreviation = models.CharField(max_length=20, blank=True, null=True, help_text="Short form (e.g., ASET, ALS, etc.)")
     slug = models.SlugField(unique=True, blank=True)
 
-    icon = models.ImageField(upload_to='institutes/', blank=True, null=True)
+    icon = models.ImageField(upload_to='institutes/', blank=True, null=True, storage=MediaCloudinaryStorage())
     is_active = models.BooleanField(default=True, help_text="Is this institute currently active?")
     is_featured = models.BooleanField(default=False, help_text="Is this institute featured on the homepage?")
     
@@ -43,6 +44,10 @@ class Subject(models.Model):
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=20)
     semesters = models.ManyToManyField(Semester, through='SubjectOffering')
+    
+    class Meta:
+        unique_together = ('code', 'name')
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -65,12 +70,11 @@ class ExamPaper(models.Model):
     subject_offering = models.ForeignKey(SubjectOffering, on_delete=models.CASCADE, related_name='papers')
     paper_type = models.CharField(max_length=1, choices=PAPER_TYPES, default='E')
     year = models.PositiveIntegerField()
-    file = models.FileField(upload_to='papers/')
+    file = models.FileField(upload_to='papers/', storage=RawMediaCloudinaryStorage(), max_length=200)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
-    # efficiency fields
+    # efficiency field
     title = models.CharField(max_length=300, blank=True, help_text="Auto-generated from filename if empty")
-    file_size = models.PositiveBigIntegerField(blank=True, null=True, help_text="File size in bytes")
     
     # Denormalized fields for faster queries (reduce joins)
     institute_name = models.CharField(max_length=200, blank=True, editable=False)
@@ -104,26 +108,18 @@ class ExamPaper(models.Model):
             
             # Create standardized filename components
             subject_code = self.subject_offering.subject.code
-            subject_name = self.subject_offering.subject.name.replace(' ', '_')
             program_name = self.subject_offering.semester.program.name.replace(' ', '_')
             paper_type_name = 'End_Sem' if self.paper_type == 'E' else 'Back_Paper'
-            
-            # Format: SUBJECTCODE_SUBJECTNAME_YEAR_PAPERTYPE_PROGRAM.extension
-            new_filename = f"{subject_code}_{subject_name}_{self.year}_{paper_type_name}_{program_name}.{file_extension}"
+
+            # Format: SUBJECTCODE_YEAR_PAPERTYPE_PROGRAM.extension
+            new_filename = f"{subject_code}_{self.year}_{paper_type_name}_{program_name}.{file_extension}"
             self.file.name = new_filename
         
         # Auto-generate title if not provided
         if not self.title and self.subject_offering:
             paper_type_display = 'End Sem' if self.paper_type == 'E' else 'Back Paper'
-            self.title = f"{self.subject_offering.subject.code} - {self.subject_offering.subject.name} ({self.year} {paper_type_display})"
-        
-        # Calculate file size
-        if self.file:
-            try:
-                self.file_size = self.file.size
-            except:
-                pass
-                
+            self.title = f"{self.subject_offering.subject.code} - {self.subject_offering.subject.name}"
+             
         super().save(*args, **kwargs)
 
     def __str__(self):

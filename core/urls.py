@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import preview_paper, FilterPapersView
+from .views import preview_paper, download_paper, FilterPapersView
 
 app_name = 'core'
 
@@ -19,6 +19,7 @@ urlpatterns = [
     
     # Paper preview and download
     path('papers/preview/<int:paper_id>/', preview_paper, name='preview_paper'),
+    path('papers/download/<int:paper_id>/', download_paper, name='download_paper'),
     
     # Report page
     path('report/', views.api_report, name='report'),

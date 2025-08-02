@@ -26,11 +26,10 @@
         </div>
         
         <div class="mt-auto flex justify-between items-center">
-            <button @click="showPreview = true" 
-                    class="text-cyan-900 hover:text-pink-800 flex font-medium items-center transition-colors">
+            <button class="preview-btn text-cyan-900 hover:text-pink-800 flex font-medium items-center transition-colors" data-pdf-url="{% url 'core:preview_paper' paper.id %}">
                 <i class="fas fa-eye mr-2"></i> Preview
             </button>
-            <a href="{{ paper.file.url }}" download 
+            <a href="{% url 'core:download_paper' paper.id %}" 
                class="hover:bg-yellow-400 text-green-900 py-2 px-4 font-medium rounded-lg hover:shadow-md transition-all">
                 <i class="fas fa-download mr-2"></i> Download
             </a>
