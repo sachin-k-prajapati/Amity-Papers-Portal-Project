@@ -1,6 +1,6 @@
 # Amity University Exam Repository
 
-A web platform built using Django that provides Amity University students with access to previous year question papers across all 8 semesters and subjects.
+A web platform built using Django that provides Amity University students with access to previous year question papers across all semesters and subjects.
 Developed by: **Shikha Bhadoria** and **Sachin Prajapati**
 
 ---
@@ -44,7 +44,7 @@ It allows users to browse papers by semester, subject, and type, making exam pre
 - ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 - ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 - ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
-- ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+- ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 - ![PyPDF2](https://img.shields.io/badge/PyPDF2-FFD43B?style=for-the-badge&logo=python&logoColor=black)
 - ![python-decouple](https://img.shields.io/badge/python--decouple-3776AB?style=for-the-badge&logo=python&logoColor=white)
 - ![dj-database-url](https://img.shields.io/badge/dj--database--url-003B57?style=for-the-badge&logo=python&logoColor=white)
@@ -122,25 +122,6 @@ http://127.0.0.1:8000
 
 ---
 
-# Development
-
-### Prerequisites
-
-- Python 3.10 or higher
-- pip (Python package manager)
-- Virtual environment (`venv`)
-
-### Steps to Set Up Locally
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/amity-papers-portal.git
-   cd amity-papers-portal
-
-   ```
-
----
-
 # Future Enhancement
 
 We plan to integrate a Machine Learning model to analyze the uploaded question papers and identify the most frequently repeated questions across subjects and semesters.
@@ -167,7 +148,3 @@ We welcome contributions to improve the Amity Papers Portal Project! 🎉
 # License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-## 📬 Contact
-
-Created by [Shikha Bhadoria](https://github.com/your-github) and [Sachin Prajapati](https://github.com/your-github) – feel free to contact us!

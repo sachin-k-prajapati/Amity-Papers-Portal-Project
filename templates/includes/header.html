@@ -16,8 +16,8 @@
       <nav class="hidden md:flex items-center space-x-6">
         <a href="{% url 'core:home' %}" class="nav-link">Home</a>
         <a href="{% url 'core:paper_list' %}" class="nav-link">Browse Papers</a>
-        <a href="#" class="nav-link">Departments</a>
-        <a href="#" class="nav-link">Contact Us</a>
+        <a href="{% url 'core:departments' %}" class="nav-link">Departments</a>
+        <a href="{% url 'core:contact_us' %}" class="nav-link">Contact Us</a>
       </nav>
       
       <!-- Mobile Menu Button with animation -->
@@ -31,8 +31,8 @@
       <div class="pt-2 space-y-2">
         <a href="{% url 'core:home' %}" class="mobile-nav-link">Home</a>
         <a href="{% url 'core:paper_list' %}" class="mobile-nav-link">Browse Papers</a>
-        <a href="#" class="mobile-nav-link">Departments</a>
-        <a href="#" class="mobile-nav-link">Contact Us</a>
+        <a href="{% url 'core:departments' %}" class="mobile-nav-link">Departments</a>
+        <a href="{% url 'core:contact_us' %}" class="mobile-nav-link">Contact Us</a>
       </div>
     </div>
   </div>

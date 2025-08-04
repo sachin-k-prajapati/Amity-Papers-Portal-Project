@@ -1,9 +1,9 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView
 from django.views import View
 from django.db.models import Count, Q
 from django.http import JsonResponse, FileResponse, Http404
-from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper
+from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper, Issue
 from .serializers import serialize_papers
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
@@ -12,6 +12,9 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 
 class HomeView(ListView):
     template_name = 'core/home.html'
@@ -525,3 +528,78 @@ def download_paper(request, paper_id):
         )
     except Exception as e:
         raise Http404("File not available")
+
+def contact_us(request):
+    context = {
+        'email': 'support@amitypapers.com',
+        'phone': '+91-1234567890',
+        'address': 'Amity University Madhya Pradesh, Gwalior',
+    }
+    return render(request, 'core/contact.html', context)
+
+def departments(request):
+    """View to display all departments/institutes that have papers available"""
+    # Get only institutes that have papers available
+    institutes_with_papers = Institute.objects.filter(
+        is_active=True,
+        programs__semesters__subject_offerings__papers__isnull=False
+    ).annotate(
+        paper_count=Count('programs__semesters__subject_offerings__papers', distinct=True),
+        program_count=Count('programs', distinct=True)
+    ).distinct().order_by('name')
+    
+    context = {
+        'institutes': institutes_with_papers,
+        'total_institutes': institutes_with_papers.count(),
+    }
+    return render(request, 'core/departments.html', context)
+
+def report_issue(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        issue = request.POST.get('issue')
+
+        # Save the issue to the database
+        Issue.objects.create(name=name, email=email, description=issue)
+
+        # Send email notification
+        try:
+            subject = f'New Issue Report from {name}'
+            message = f"""
+New issue report received:
+
+Name: {name}
+Email: {email}
+Issue Description:
+{issue}
+
+This email was sent from the Amity Papers Portal.
+            """
+            
+            print(f"Attempting to send email...")
+            print(f"From: {settings.DEFAULT_FROM_EMAIL}")
+            print(f"To: {settings.ADMIN_EMAIL}")
+            print(f"Subject: {subject}")
+            
+            result = send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.ADMIN_EMAIL],
+                fail_silently=False,
+            )
+            
+            print(f"Email sent successfully! Return value: {result}")
+            messages.success(request, 'Your issue has been submitted successfully and an email notification has been sent. We will get back to you soon!')
+            
+        except Exception as e:
+            # If email fails, still show success message for user experience
+            print(f"Email sending failed: {e}")
+            print(f"Error type: {type(e).__name__}")
+            messages.success(request, 'Your issue has been submitted successfully. We will get back to you soon!')
+            
+        return redirect('core:contact_us')
+    
+    # If GET request, redirect to contact page
+    return redirect('core:contact_us')

@@ -23,4 +23,9 @@ urlpatterns = [
     
     # Report page
     path('report/', views.api_report, name='report'),
+
+    # Contact and departments
+    path('contact/', views.contact_us, name='contact_us'),
+    path('departments/', views.departments, name='departments'),
+    path('report-issue/', views.report_issue, name='report_issue'),
 ]

@@ -1,13 +1,14 @@
 from django.db import models
 from django.utils.text import slugify
-from cloudinary_storage.storage import MediaCloudinaryStorage, RawMediaCloudinaryStorage
+# from cloudinary_storage.storage import MediaCloudinaryStorage, RawMediaCloudinaryStorage
 
 class Institute(models.Model):
     name = models.CharField(max_length=200)
     abbreviation = models.CharField(max_length=20, blank=True, null=True, help_text="Short form (e.g., ASET, ALS, etc.)")
     slug = models.SlugField(unique=True, blank=True)
 
-    icon = models.ImageField(upload_to='institutes/', blank=True, null=True, storage=MediaCloudinaryStorage())
+    # icon = models.ImageField(upload_to='institutes/', blank=True, null=True, storage=MediaCloudinaryStorage())
+    icon = models.ImageField(upload_to='institutes/', blank=True, null=True)  # Removed storage argument
     is_active = models.BooleanField(default=True, help_text="Is this institute currently active?")
     is_featured = models.BooleanField(default=False, help_text="Is this institute featured on the homepage?")
     
@@ -70,7 +71,9 @@ class ExamPaper(models.Model):
     subject_offering = models.ForeignKey(SubjectOffering, on_delete=models.CASCADE, related_name='papers')
     paper_type = models.CharField(max_length=1, choices=PAPER_TYPES, default='E')
     year = models.PositiveIntegerField()
-    file = models.FileField(upload_to='papers/', storage=RawMediaCloudinaryStorage(), max_length=200)
+    # file = models.FileField(upload_to='papers/', storage=RawMediaCloudinaryStorage(), max_length=200)
+    file = models.FileField(upload_to='papers/', max_length=200)  # Removed storage argument
+
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     # efficiency field
@@ -124,3 +127,15 @@ class ExamPaper(models.Model):
 
     def __str__(self):
         return f"{self.subject_code} {self.get_paper_type_display()} ({self.year})"
+    
+
+from django.db import models
+
+class Issue(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Issue by {self.name} - {self.email}"
