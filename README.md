@@ -13,7 +13,6 @@ Developed by: **Shikha Bhadoria** and **Sachin Prajapati**
 - [How to Run Locally](#how-to-run-locally)
 - [Installation &amp; Run Instructions](#installation--run-instructions)
 - [API Endpoints](#api-endpoints)
-- [Development](#development)
 - [Future Enhancement](#future-enhancement)
 - [Contributing](#contributing)
 - [License](#license)
