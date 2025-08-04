@@ -127,15 +127,3 @@ class ExamPaper(models.Model):
 
     def __str__(self):
         return f"{self.subject_code} {self.get_paper_type_display()} ({self.year})"
-    
-
-from django.db import models
-
-class Issue(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Issue by {self.name} - {self.email}"

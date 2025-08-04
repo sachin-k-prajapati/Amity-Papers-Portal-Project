@@ -3,7 +3,7 @@ from django.views.generic import ListView
 from django.views import View
 from django.db.models import Count, Q
 from django.http import JsonResponse, FileResponse, Http404
-from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper, Issue
+from .models import Institute, Program, Semester, Subject, SubjectOffering, ExamPaper
 from .serializers import serialize_papers
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
@@ -560,10 +560,7 @@ def report_issue(request):
         email = request.POST.get('email')
         issue = request.POST.get('issue')
 
-        # Save the issue to the database
-        Issue.objects.create(name=name, email=email, description=issue)
-
-        # Send email notification
+        # Send email notification directly without saving to database
         try:
             subject = f'New Issue Report from {name}'
             message = f"""
@@ -591,13 +588,13 @@ This email was sent from the Amity Papers Portal.
             )
             
             print(f"Email sent successfully! Return value: {result}")
-            messages.success(request, 'Your issue has been submitted successfully and an email notification has been sent. We will get back to you soon!')
+            messages.success(request, 'Your message has been sent successfully! We will get back to you soon.')
             
         except Exception as e:
-            # If email fails, still show success message for user experience
+            # If email fails, show error message
             print(f"Email sending failed: {e}")
             print(f"Error type: {type(e).__name__}")
-            messages.success(request, 'Your issue has been submitted successfully. We will get back to you soon!')
+            messages.error(request, 'There was an error sending your message. Please try again later or contact us directly.')
             
         return redirect('core:contact_us')
     
