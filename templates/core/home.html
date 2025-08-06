@@ -30,7 +30,7 @@
       Amity University Exam Repository
     </h1>
     <p class="text-2xl font-semibold mb-8 max-w-2xl mx-auto">
-      Access {{ total_papers|default:"10,000" }}+ previous year papers with intelligent search
+      Access {{ total_papers|default:"10,000" }}+ Previous Years Papers
     </p>
     
     <!-- Smart Search Container -->
@@ -38,7 +38,7 @@
       <div class="relative">
         <input type="text" name="q" id="smart-search"
               class="w-full placeholder-slate-950 py-4 px-6 bg-sky-100 rounded-full shadow-inner focus:outline-none text-gray-950 pr-12 transition-all duration-300 border-4 border-cyan-950 focus:ring-4 focus:ring-sky-700"
-              placeholder="Search by subject code or name (e.g., 'CSE301', 'Operating Systems')">
+              placeholder="Search Papers... (e.g., 'CSE401', 'Java Programming')">
         <button type="submit" class="absolute right-3 top-3 text-gray-700 p-2 rounded-full hover:bg-lime-200 transition">
           <i class="fas fa-search"></i>
         </button>
@@ -72,14 +72,14 @@
 <!-- ASET Section -->
 <section class="py-16 bg-gradient-to-r from-blue-50 to-blue-100 relative" id="aset-section">
   <div class="container mx-auto px-4 relative z-10">
-    <h3 class="text-5xl font-serif text-center text-white mb-8">Amity School of Engineering & Technology</h3>
+    <h3 class="text-5xl font-serif text-center text-white mb-8">ASET - Amity School of Engineering & Technology</h3>
     <p class="text-center text-white mb-12 max-w-3xl mx-auto">
       All programs offered by ASET. Click on any program to view its papers.
     </p>
     <div class="flex flex-wrap justify-center gap-6">
       {% for program in aset_programs %}
       <button onclick="openSemesterPopup('{{ program.id }}', '{{ program.name }}')"
-              class="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold text-lg py-4 px-6 rounded-lg shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+              class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-sky-900 font-semibold text-lg py-4 px-6 rounded-lg shadow-lg transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
         {{ program.name }}
       </button>
       {% endfor %}
@@ -113,7 +113,7 @@
         <div class="bg-white text-sky-950 rounded-lg p-4 shadow-md">
           <h3 class="text-lg font-semibold mb-2">📚 Filter Preview</h3>
           <p class="text-sm mb-4">
-            Browse and filter all the previous year papers exactly how you want using our smart filter. Here's a sneak peek:
+            Filtering for easy paper discovery. Here's a sneak peek:
           </p>
 
           <!-- Static Preview Image or Dummy UI -->
@@ -123,7 +123,7 @@
             <!-- Overlay text on hover -->
             <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black bg-opacity-40">
               <span class="text-white text-sm font-semibold bg-sky-700 bg-opacity-80 px-4 py-2 rounded shadow-lg">
-                👀 This is a Preview of Filter Panel.
+                Filter Preview
               </span>
             </div>
 
