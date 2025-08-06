@@ -21,14 +21,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-# Customize admin site headers for university branding
-admin.site.site_header = "Amity Papers Portal Administration"
-admin.site.site_url = "/"  # This points to the homepage
-admin.site.site_title = "Papers Portal Admin"
-admin.site.index_title = "Welcome to Papers Management System"
-
 urlpatterns = [
     path('admin-aump/', admin.site.urls),
+    # Include core app URLs
     path('', include('core.urls')),
     
     # Favicon
