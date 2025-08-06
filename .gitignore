@@ -76,3 +76,7 @@ yarn-error.log*
 
 # PostCSS cache
 .postcssrc
+
+db.sqlite3
+output.css
+output[1].css
