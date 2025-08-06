@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls static %}
 
-{% block title %}Bulk Upload | {{ site_title|default:_('Papers Portal Admin') }}{% endblock %}
+{% block title %}Bulk Upload | {{ site_title|default:_('Ami Sangrah Admin') }}{% endblock %}
 
 {% block extrahead %}
     {{ block.super }}
@@ -38,10 +38,6 @@
 <div id="content-main">
     <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
-        
-        <div>
-            <p class="help">Upload multiple files with automatic year and paper type detection from filenames.</p>
-        </div>
 
         <fieldset class="module aligned">
             <div class="form-row">

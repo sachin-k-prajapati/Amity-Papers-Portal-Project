@@ -9,6 +9,11 @@ from django.template.response import TemplateResponse
 
 from .models import Institute, Program, Semester, Subject, ExamPaper, SubjectOffering
 
+# Customize admin site headers for university branding
+admin.site.site_header = "Ami Sangrah Administration"
+admin.site.site_title = "Ami Sangrah Admin" 
+admin.site.index_title = "Welcome to Ami Sangrah Management System"
+
 # =================== ADMIN CONFIGS ===================== #
 
 # Inline to allow managing SubjectOffering within Semester
