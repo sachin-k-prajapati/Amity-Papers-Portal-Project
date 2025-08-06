@@ -139,9 +139,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='')
 
 # Admin email for error notifications
-ADMINS = [
-    ('Admin', config('ADMIN_EMAIL', default='')),
-]
+ADMIN_EMAIL = config('ADMIN_EMAIL', default='')
 
 # Logging - console only, errors and warnings only
 LOG_LEVEL = 'DEBUG' if DEBUG else 'ERROR'
