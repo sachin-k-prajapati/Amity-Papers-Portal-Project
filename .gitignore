@@ -18,6 +18,11 @@ var/
 wheels/
 share/python-wheels/
 *.egg-info/
+
+# Local configuration files
+config/settings.py
+static/css/output.css
+static/css/output[1].css
 .installed.cfg
 *.egg
 MANIFEST
@@ -78,5 +83,3 @@ yarn-error.log*
 .postcssrc
 
 db.sqlite3
-output.css
-output[1].css
