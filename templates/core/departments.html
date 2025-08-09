@@ -1,24 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-10">
-  <h1 class="text-3xl font-bold mb-6 text-center text-white">Departments</h1>
-  <p class="text-center text-gray-300 mb-8">Browse papers by department/institute</p>
-  
-  <!-- Statistics -->
-  <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 shadow-md mb-8">
-    <div class="text-center text-white">
-      <h2 class="text-2xl font-bold mb-2">{{ total_institutes }}</h2>
-      <p class="text-blue-100">Departments with Available Papers</p>
+<div class="container mx-auto px-4 py-10 font-sans">
+  <!-- Yellow Container -->
+  <div class="bg-yellow-100 rounded-lg p-6 shadow-lg mb-8 text-center border border-yellow-300 border-l-4 border-r-4 border-l-yellow-500 border-r-yellow-500">
+    <h1 class="text-4xl font-bold mb-6 text-blue-900">Departments</h1>
+    <p class="text-lg text-gray-600 mb-4 font-sans">Browse papers by department/institute</p>
+    <div class="text-blue-900">
+      <h2 class="text-3xl font-bold mb-2 text-blue-900 font-sans">{{ total_institutes }}</h2>
+      <p class="text-lg text-gray-600 font-sans">Departments with Available Papers</p>
     </div>
   </div>
 
   <!-- Departments Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for institute in institutes %}
-    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <div class="bg-yellow-100 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
       <!-- Institute Icon/Header -->
-      <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+      <div class="bg-yellow-200 p-6">
         {% if institute.icon %}
           <div class="flex justify-center mb-4">
             <img src="{{ institute.icon.url }}" alt="{{ institute.name }} Icon" class="h-16 w-16 object-contain bg-white rounded-full p-2">
@@ -26,11 +25,11 @@
         {% else %}
           <div class="flex justify-center mb-4">
             <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center">
-              <i class="fas fa-university text-blue-600 text-2xl"></i>
+              <i class="fas fa-university text-yellow-600 text-2xl"></i>
             </div>
           </div>
         {% endif %}
-        <h3 class="text-xl font-bold text-white text-center">
+        <h3 class="text-xl font-bold text-gray-800 text-center font-sans">
           {% if institute.abbreviation %}
             {{ institute.abbreviation }}
           {% else %}
@@ -41,24 +40,24 @@
 
       <!-- Institute Details -->
       <div class="p-6">
-        <h4 class="text-lg font-semibold text-gray-800 mb-2">{{ institute.name }}</h4>
+        <h4 class="text-lg font-semibold text-gray-800 mb-2 font-sans">{{ institute.name }}</h4>
         
         <!-- Statistics -->
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ institute.paper_count }}</div>
-            <div class="text-sm text-gray-500">Papers</div>
+            <div class="text-2xl font-bold text-yellow-600 font-sans">{{ institute.paper_count }}</div>
+            <div class="text-sm text-gray-500 font-sans">Papers</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-purple-600">{{ institute.program_count }}</div>
-            <div class="text-sm text-gray-500">Programs</div>
+            <div class="text-2xl font-bold text-yellow-600 font-sans">{{ institute.program_count }}</div>
+            <div class="text-sm text-gray-500 font-sans">Programs</div>
           </div>
         </div>
 
         <!-- Browse Button -->
         <div class="text-center">
           <a href="{% url 'core:paper_list' %}?institute={{ institute.slug }}" 
-             class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-300 font-medium">
+             class="inline-block bg-yellow-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-yellow-300 transition-colors duration-300 font-medium font-sans">
             <i class="fas fa-search mr-2"></i>Browse Papers
           </a>
         </div>
@@ -69,39 +68,10 @@
       <div class="text-gray-400 mb-4">
         <i class="fas fa-university text-6xl"></i>
       </div>
-      <h3 class="text-xl font-semibold text-white mb-2">No Departments Found</h3>
-      <p class="text-gray-400">No departments with available papers found.</p>
+      <h3 class="text-xl font-semibold text-white mb-2 font-sans">No Departments Found</h3>
+      <p class="text-white font-sans">No departments with available papers found.</p>
     </div>
     {% endfor %}
-  </div>
-
-  <!-- Additional Info -->
-  <div class="mt-12 bg-blue-100 rounded-lg p-6 shadow-md">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800">
-      <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-      About Our Departments
-    </h3>
-    <p class="text-gray-700 mb-4">
-      We provide previous year question papers from various departments and institutes of Amity University. 
-      Each department offers multiple programs with comprehensive paper collections to help students in their exam preparation.
-    </p>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-      <div class="bg-white rounded-lg p-4">
-        <i class="fas fa-graduation-cap text-blue-600 text-2xl mb-2"></i>
-        <h4 class="font-semibold text-gray-800">Quality Papers</h4>
-        <p class="text-sm text-gray-600">Authentic previous year question papers</p>
-      </div>
-      <div class="bg-white rounded-lg p-4">
-        <i class="fas fa-download text-green-600 text-2xl mb-2"></i>
-        <h4 class="font-semibold text-gray-800">Easy Download</h4>
-        <p class="text-sm text-gray-600">Quick and easy paper downloads</p>
-      </div>
-      <div class="bg-white rounded-lg p-4">
-        <i class="fas fa-clock text-purple-600 text-2xl mb-2"></i>
-        <h4 class="font-semibold text-gray-800">Regular Updates</h4>
-        <p class="text-sm text-gray-600">Continuously updated with new papers</p>
-      </div>
-    </div>
   </div>
 </div>
 {% endblock %}
