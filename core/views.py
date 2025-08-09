@@ -564,14 +564,13 @@ def report_issue(request):
         try:
             subject = f'New Issue Report from {name}'
             message = f"""
-New issue report received:
+            New issue report received:
+            Name: {name}
+            Email: {email}
+            Issue Description:
+            {issue}
 
-Name: {name}
-Email: {email}
-Issue Description:
-{issue}
-
-This email was sent from the Amity Papers Portal.
+            This email was sent from the Ami Sangrah Portal.
             """
             
             print(f"Attempting to send email...")
